@@ -272,13 +272,33 @@
   sendBtn.onclick = send;
 
   // ===== العدّاد =====
-  var left = total, tEl = document.getElementById('timer');
-  tEl.textContent = left;
-  var iv = setInterval(function () {
-    left--; tEl.textContent = Math.max(0, left);
+  // وقت الانتهاء مطلق من البوت (e = epoch بالثواني)، يبدأ من لحظة إرسال الجولة للجميع
+  var tEl = document.getElementById('timer');
+  var endParam = parseInt(q.get('e'), 10);
+  var skew = 0; // فرق ساعة الجوال عن ساعة السيرفر (ms)
+  var endAt = endParam ? endParam * 1000 : Date.now() + total * 1000;
+  var iv = null;
+  function tick() {
+    var left = Math.max(0, Math.ceil((endAt - (Date.now() + skew)) / 1000));
+    tEl.textContent = left;
     if (left <= 10) tEl.classList.add('low');
     if (left <= 0) { clearInterval(iv); send(); }
-  }, 1000);
+  }
+  function startTimer() { tick(); iv = setInterval(tick, 500); }
+  document.addEventListener('visibilitychange', tick);
+  if (endParam) {
+    // نصحح فرق الساعة من ترويسة Date للاستضافة، وإذا فشل نكمل بدونه
+    var done = false, t0 = Date.now();
+    var go = function () { if (!done) { done = true; startTimer(); } };
+    setTimeout(go, 1500);
+    try {
+      fetch(location.pathname + '?_=' + t0, { method: 'HEAD', cache: 'no-store' }).then(function (r) {
+        var d = r.headers.get('Date');
+        if (d && !done) { var t1 = Date.now(); skew = new Date(d).getTime() - (t0 + t1) / 2; }
+        go();
+      }).catch(go);
+    } catch (e) { go(); }
+  } else { startTimer(); }
 
   window.addEventListener('resize', fit);
   window.addEventListener('orientationchange', function () { setTimeout(fit, 150); });
