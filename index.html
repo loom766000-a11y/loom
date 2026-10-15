@@ -4,113 +4,286 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>RAY - لوح الرسم</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-:root{--cy:#07f5ff;--bl:#0b63ff;--ln:#0b3794;--pn:#00102c}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;color:#fff;font-family:Tajawal,system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;background:#010d26}
-body{display:flex;flex-direction:column;align-items:center;gap:12px;padding:max(12px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom));overflow:hidden;touch-action:manipulation}
-body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:
- linear-gradient(118deg,transparent 0 6%,rgba(20,100,255,.35) 6% 6.5%,transparent 6.5% 9%,rgba(20,100,255,.18) 9% 12%,transparent 12%),
- linear-gradient(-62deg,transparent 0 88%,rgba(20,100,255,.35) 88% 88.5%,transparent 88.5% 91%,rgba(20,100,255,.18) 91% 94%,transparent 94%),
- radial-gradient(110% 50% at 50% 0%,#05306e66,transparent 70%),linear-gradient(#010a1f,#01102b)}
-header{width:100%;max-width:600px;height:64px;display:flex;align-items:center;justify-content:center;border:2px solid #0a3fbf;border-radius:26px;background:linear-gradient(#03163b,#010f26);box-shadow:0 0 18px #0a4cff66,inset 0 0 18px #0a4cff33}
-header img{height:42px;display:block;filter:drop-shadow(0 0 7px #1e7bff)}
-.top{width:100%;max-width:600px;display:flex;justify-content:space-between;align-items:flex-end;gap:10px;padding:0 4px}
-#p{font-size:20px;font-weight:700;line-height:1.35}
-#p::after{content:"";display:block;width:46px;height:3px;margin-top:6px;border-radius:3px;background:#07e5fb;box-shadow:0 0 8px #07e5fb}
-#t{font-variant-numeric:tabular-nums;font-weight:700;padding:3px 14px;border-radius:99px;border:1.5px solid var(--ln);background:var(--pn);color:var(--cy)}
-#t.low{background:#e53935;border-color:#ff7b78;color:#fff}
-canvas{background:#fff;border-radius:16px;border:3px solid #0242dd;box-shadow:0 0 20px #0a5cff99;touch-action:none}
-.row{width:100%;max-width:600px;display:flex;gap:8px;align-items:center;justify-content:space-between}
-.sw{flex:1 1 0;min-width:0;max-width:44px;aspect-ratio:1/1;padding:0;border-radius:50%;border:2px solid #ffffff55;box-shadow:0 0 8px #0a4cff55}
-.sw.on{border-color:var(--cy);box-shadow:0 0 0 3px #010d26,0 0 0 5px var(--cy),0 0 14px var(--cy)}
-.b{height:48px;min-width:0;padding:0 10px;flex:1;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:14px;border:1.5px solid var(--ln);background:var(--pn);color:#fff;font:inherit;font-weight:500;box-shadow:inset 0 0 12px #0a4cff22}
-.b.on{border-color:var(--cy);box-shadow:0 0 12px #07f5ff88,inset 0 0 10px #07f5ff33}
-.b.sz{flex:none;width:54px}
-.b i{display:block;border-radius:50%;background:#fff}
-.b svg{flex:none;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-#send{width:100%;max-width:600px;height:54px;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:30px;border:2px solid #0a3fbf;font:inherit;font-size:18px;font-weight:700;color:#fff;background:linear-gradient(#1ba2ff,#006dfc);box-shadow:0 0 20px #0a7cff99}
-#send svg{flex:none;width:24px;height:24px;fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-#send:disabled{opacity:.6}
-#m{min-height:18px;font-size:14px;color:#ff7b78}
+  :root {
+    --bg: #050b1f; --bg2: #08122e; --blue: #1e6bff; --cyan: #29b6ff;
+    --panel: #0a1840; --line: #12348f;
+  }
+  /* منع السحب/التمرير/الإغلاق بالسحب من فوق لتحت */
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    overflow: hidden; overscroll-behavior: none;
+    position: fixed; inset: 0;
+    touch-action: none; -webkit-user-select: none; user-select: none;
+    -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+    background: var(--bg); color: #fff;
+    font-family: system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
+  }
+  body {
+    background:
+      radial-gradient(120% 60% at 50% 0%, #0b1f5c 0%, transparent 60%),
+      radial-gradient(100% 50% at 50% 100%, #0a1a52 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg2), var(--bg));
+  }
+  /* خطوط نيون مائلة بالزوايا */
+  .deco { position: absolute; pointer-events: none; z-index: 0; width: 38%;
+          -webkit-mask-image: linear-gradient(180deg,#000 40%,transparent); mask-image: linear-gradient(180deg,#000 40%,transparent); }
+  .deco.br, .deco.bl { -webkit-mask-image: linear-gradient(0deg,#000 40%,transparent); mask-image: linear-gradient(0deg,#000 40%,transparent); }
+  .deco.tr, .deco.tl { top: 0; height: 90px; }
+  .deco.br, .deco.bl { bottom: 0; height: 110px; }
+  .deco.tr, .deco.bl { right: auto; }
+  .deco.tr { right: 0;
+    background: linear-gradient(115deg, transparent 55%, rgba(30,107,255,.55) 56%, transparent 59%, transparent 66%, rgba(30,107,255,.3) 67%, transparent 72%); }
+  .deco.tl { left: 0;
+    background: linear-gradient(65deg, transparent 55%, rgba(30,107,255,.55) 56%, transparent 59%, transparent 66%, rgba(30,107,255,.3) 67%, transparent 72%); }
+  .deco.br { right: 0;
+    background: linear-gradient(65deg, transparent 55%, rgba(30,107,255,.55) 56%, transparent 59%, transparent 66%, rgba(30,107,255,.3) 67%, transparent 72%); }
+  .deco.bl { left: 0;
+    background: linear-gradient(115deg, transparent 55%, rgba(30,107,255,.55) 56%, transparent 59%, transparent 66%, rgba(30,107,255,.3) 67%, transparent 72%); }
+  .mark { position: absolute; z-index: 0; pointer-events: none; font-weight: 900; font-style: italic;
+          color: #1647c9; opacity: .55; line-height: 1; letter-spacing: -2px; text-shadow: 0 0 12px rgba(30,107,255,.6); }
+  .mark.t { top: 6px; right: 12px; font-size: 38px; }
+  .mark.b { bottom: 8px; left: 14px; font-size: 56px; }
+
+  #app { position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column;
+         padding: calc(env(safe-area-inset-top) + 8px) 10px calc(env(safe-area-inset-bottom) + 10px);
+         box-sizing: border-box; gap: 10px; }
+
+  /* الشريط العلوي: شارة RAY + السؤال + العدّاد */
+  #top { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; padding: 0 6px; }
+  #brand { font-weight: 900; font-size: 22px; letter-spacing: 1px; position: relative; padding-bottom: 6px;
+           text-shadow: 0 0 10px rgba(41,182,255,.7); }
+  #brand::after { content: ""; position: absolute; left: 14%; right: 14%; bottom: 0; height: 3px; border-radius: 3px;
+                  background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+  #prompt { flex: 1; text-align: center; font-size: 16px; font-weight: 700; line-height: 1.3; padding-bottom: 6px;
+            text-shadow: 0 0 10px rgba(41,182,255,.5); }
+  #timer { font-size: 18px; font-weight: 800; min-width: 50px; text-align: center; margin-bottom: 4px;
+           background: var(--panel); border: 1.5px solid var(--blue); border-radius: 12px; padding: 4px 8px;
+           box-shadow: 0 0 10px rgba(30,107,255,.5); }
+  #timer.low { background: #5c0f16; border-color: #ff4d5a; box-shadow: 0 0 12px rgba(255,77,90,.6); }
+
+  #boardWrap { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+  #frame { border: 2.5px solid var(--blue); border-radius: 18px; padding: 0; background: #fff; overflow: hidden;
+           box-shadow: 0 0 0 1px #0b2c8a, 0 0 18px rgba(30,107,255,.75), 0 0 40px rgba(30,107,255,.35); }
+  #board { display: block; touch-action: none; }
+
+  .row { display: flex; gap: 8px; justify-content: space-between; align-items: center; }
+  #colors { padding: 0 4px; }
+  .sw { width: 38px; height: 38px; border-radius: 50%; box-sizing: border-box;
+        border: 2px solid rgba(255,255,255,.18); box-shadow: 0 0 6px rgba(0,0,0,.5); }
+  .sw.on { border: 3px solid var(--cyan); box-shadow: 0 0 0 2px #fff3, 0 0 12px var(--cyan); transform: scale(1.12); }
+
+  .tool { height: 46px; border-radius: 12px; background: var(--panel); border: 1.5px solid var(--line);
+          display: flex; align-items: center; justify-content: center; gap: 8px; color: #fff; font: inherit;
+          font-size: 14px; padding: 0 14px; touch-action: manipulation; box-shadow: inset 0 0 10px rgba(30,107,255,.15); }
+  .tool svg { width: 22px; height: 22px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .tool.on { border-color: var(--cyan); box-shadow: 0 0 12px rgba(41,182,255,.7), inset 0 0 10px rgba(41,182,255,.25); }
+  .wd { width: 54px; padding: 0; }
+  .wd i { display: block; background: #fff; border-radius: 50%; }
+  #eraser, #undo { flex: 1.6; }
+  #tools { direction: ltr; }
+  #tools .tool { direction: rtl; }
+
+  #send { height: 52px; border: 0; border-radius: 26px; font: inherit; font-size: 18px; font-weight: 800; color: #fff;
+          display: flex; align-items: center; justify-content: center; gap: 10px; touch-action: manipulation;
+          background: linear-gradient(180deg, #2da1ff, #0a6cff);
+          box-shadow: 0 0 0 2px #0a2f8f, 0 0 18px rgba(30,107,255,.8); }
+  #send svg { width: 26px; height: 26px; fill: #fff; }
+  #send:disabled { opacity: .5; }
 </style>
 </head>
 <body>
-<header><img alt="RAY" src="data:image/png;base64,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"></header>
-<div class="top"><div id="p"></div><div id="t" hidden></div></div>
-<canvas id="cv"></canvas>
-<div class="row" id="cols" style="direction:rtl"></div>
-<div class="row"><span id="sizes" style="display:contents"></span>
-<button class="b" id="undo"><span>تراجع</span><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
-<button class="b" id="era"><span>ممسح</span><svg viewBox="0 0 24 24"><path d="M4 14.5l8.5-8.5a2 2 0 0 1 2.8 0l3.7 3.7a2 2 0 0 1 0 2.8L12.5 19H8z"/><path d="M8 19h12"/></svg></button></div>
-<div id="m"></div>
-<button id="send"><span>إرسال الرسمة</span><svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg></button>
+<div class="deco tr"></div><div class="deco tl"></div><div class="deco br"></div><div class="deco bl"></div>
+<div class="mark b">R</div>
+
+<div id="app">
+  <div id="top">
+    <div id="brand">RAY</div>
+    <div id="prompt"></div>
+    <div id="timer">--</div>
+  </div>
+
+  <div id="boardWrap"><div id="frame"><canvas id="board"></canvas></div></div>
+
+  <div class="row" id="colors"></div>
+  <div class="row" id="tools">
+    <button class="tool" id="eraser" type="button">
+      <svg viewBox="0 0 24 24"><path d="M3 15l9-9a2 2 0 0 1 3 0l5 5a2 2 0 0 1 0 3l-6 6H8l-5-5z"/><path d="M9 9l6 6"/></svg>
+      ممسح
+    </button>
+    <button class="tool" id="undo" type="button">
+      <svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>
+      تراجع
+    </button>
+    <span class="row" id="widths" style="gap:8px"></span>
+  </div>
+  <button id="send" type="button">
+    <svg viewBox="0 0 24 24"><path d="M21.5 3L2 11l6 2.2L10 20l3-4 5 3.5z"/></svg>
+    إرسال الرسمة
+  </button>
+</div>
+
 <script>
-const tg=window.Telegram&&Telegram.WebApp;if(tg){tg.ready();tg.expand();}
-const q=new URLSearchParams(location.search);
-document.getElementById('p').textContent=q.get('p')||'ارسم بحرية';
-let left=parseInt(q.get('t'))||0;
-// اللوح: 254 وحدة عرضاً و178 ارتفاعاً (نسبة 10:7). لون 7 = أبيض. عرض 3 = الممسح.
-const COLORS=['#1b1b1f','#e53935','#1e88e5','#43a047','#fdd835','#fb8c00','#8d5a3b','#ffffff'];
-const WIDTHS=[3,7,14,26];
-let strokes=[],cur=null,color=0,wid=1,eraser=false,sent=false,W=300,H=210;
-const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
-const $=id=>document.getElementById(id);
-function msg(t){$('m').textContent=t;}
+(function () {
+  // ===== نفس ثوابت البوت =====
+  var COLORS = ['#1b1b1f', '#e53935', '#1e88e5', '#43a047', '#fdd835', '#fb8c00', '#8d5a3b', '#ffffff'];
+  var WIDTHS = [3, 7, 14, 26];
+  var UI_WIDTHS = [1, 2, 3];     // السماكات الظاهرة بالواجهة (فهارس WIDTHS)
+  var W = 254, H = 178;
+  var MAX_RAW = 3000;            // sendData حده 4096 بايت (base64) ≈ 3072 خام
 
-// ENC-START
-function rdp(p,t){if(p.length<3)return p;const keep=new Uint8Array(p.length);keep[0]=keep[p.length-1]=1;const st=[[0,p.length-1]];
- while(st.length){const[a,b]=st.pop();let md=0,mi=-1;const ax=p[a][0],ay=p[a][1],dx=p[b][0]-ax,dy=p[b][1]-ay,L=Math.hypot(dx,dy);
-  for(let i=a+1;i<b;i++){const d=L?Math.abs(dy*(p[i][0]-ax)-dx*(p[i][1]-ay))/L:Math.hypot(p[i][0]-ax,p[i][1]-ay);if(d>md){md=d;mi=i;}}
-  if(md>t&&mi>0){keep[mi]=1;st.push([a,mi],[mi,b]);}}
- return p.filter((_,i)=>keep[i]);}
-function encode(list){for(let t=0.5;t<=6;t+=0.5){const b=[];
-  for(const s of list){b.push(255,s.c*4+s.w);for(const q of rdp(s.p,t))b.push(q[0],q[1]);}
-  const out=btoa(String.fromCharCode.apply(null,b));if(out.length<=3900)return out;}
- return '';}
-// ENC-END
+  var tg = window.Telegram && window.Telegram.WebApp;
+  if (tg) {
+    try { tg.ready(); } catch (e) {}
+    try { tg.expand(); } catch (e) {}
+    // يمنع إغلاق الصفحة بالسحب لتحت وتحرك الصفحة وقت الرسم
+    try { tg.disableVerticalSwipes(); } catch (e) {}
+    try { tg.enableClosingConfirmation(); } catch (e) {}
+    try { tg.setHeaderColor('#050b1f'); tg.setBackgroundColor('#050b1f'); } catch (e) {}
+  }
 
-function fit(){W=Math.max(240,Math.min(innerWidth-28,(innerHeight-340)/0.7,600));H=Math.round(W*0.7);const d=window.devicePixelRatio||1;
- cv.style.width=W+'px';cv.style.height=H+'px';cv.width=Math.round(W*d);cv.height=Math.round(H*d);ctx.setTransform(d,0,0,d,0,0);redraw();}
-function pt(e){const r=cv.getBoundingClientRect(),k=254/r.width;
- return[Math.max(0,Math.min(254,Math.round((e.clientX-r.left)*k))),Math.max(0,Math.min(178,Math.round((e.clientY-r.top)*k)))];}
-function drawStroke(s){const k=W/254,p=s.p;if(!p.length)return;ctx.strokeStyle=ctx.fillStyle=COLORS[s.c];ctx.lineWidth=WIDTHS[s.w]*k;ctx.lineCap=ctx.lineJoin='round';
- if(p.length<2){ctx.beginPath();ctx.arc(p[0][0]*k,p[0][1]*k,ctx.lineWidth/2,0,7);ctx.fill();return;}
- ctx.beginPath();ctx.moveTo(p[0][0]*k,p[0][1]*k);
- for(let i=1;i<p.length-1;i++)ctx.quadraticCurveTo(p[i][0]*k,p[i][1]*k,(p[i][0]+p[i+1][0])/2*k,(p[i][1]+p[i+1][1])/2*k);
- ctx.lineTo(p[p.length-1][0]*k,p[p.length-1][1]*k);ctx.stroke();}
-function redraw(){ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);strokes.forEach(drawStroke);if(cur)drawStroke(cur);}
+  // منع أي تمرير/سحب على مستوى الصفحة
+  ['touchmove', 'gesturestart', 'gesturechange', 'wheel', 'contextmenu'].forEach(function (ev) {
+    document.addEventListener(ev, function (e) { e.preventDefault(); }, { passive: false });
+  });
 
-cv.addEventListener('pointerdown',e=>{if(sent)return;e.preventDefault();cv.setPointerCapture(e.pointerId);cur={c:eraser?7:color,w:eraser?3:wid,p:[pt(e)]};msg('');redraw();});
-cv.addEventListener('pointermove',e=>{if(!cur)return;e.preventDefault();const p=pt(e),l=cur.p[cur.p.length-1];if(Math.abs(p[0]-l[0])+Math.abs(p[1]-l[1])>=1){cur.p.push(p);redraw();}});
-const end=()=>{if(cur){strokes.push(cur);cur=null;redraw();}};
-['pointerup','pointercancel'].forEach(n=>cv.addEventListener(n,end));
+  var q = new URLSearchParams(location.search);
+  document.getElementById('prompt').textContent = q.get('p') || 'ارسم أي شي من خيالك';
+  var total = parseInt(q.get('t'), 10) || 75;
 
-function mark(box,i){[...box.children].forEach((x,j)=>x.classList.toggle('on',j===i));}
-COLORS.forEach((c,i)=>{const b=document.createElement('button');b.className='sw'+(i===0?' on':'');b.style.background=c;
- b.onclick=()=>{color=i;eraser=false;$('era').classList.remove('on');mark($('cols'),i);};$('cols').appendChild(b);});
-[8,16,24].forEach((d,i)=>{const b=document.createElement('button');b.className='b sz'+(i===wid?' on':'');b.innerHTML='<i style="width:'+d+'px;height:'+d+'px"></i>';
- b.onclick=()=>{wid=i;eraser=false;$('era').classList.remove('on');mark($('sizes'),i);};$('sizes').appendChild(b);});
-$('era').onclick=()=>{eraser=!eraser;$('era').classList.toggle('on',eraser);if(eraser)[...$('sizes').children].forEach(x=>x.classList.remove('on'));else mark($('sizes'),wid);};
-$('undo').onclick=()=>{if(!sent){strokes.pop();redraw();}};
+  // ===== اللوح =====
+  var cv = document.getElementById('board'), ctx = cv.getContext('2d');
+  var dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 3));
+  var strokes = [], cur = null, color = 0, wIdx = 1, erasing = false, sent = false;
 
-function send(auto){
- if(sent)return;
- let d;
- if(!strokes.length){if(!auto){msg('ارسم شي أولاً');return;}d='/wA=';}
- else{d=encode(strokes);if(!d){msg('الرسمة معقدة، امسح جزء منها وأرسل');return;}}
- sent=true;$('send').disabled=true;
- if(tg)tg.sendData(d);else msg('تم (خارج تيليجرام): '+d.length+' حرف');
-}
-$('send').onclick=()=>send(false);
+  function fit() {
+    var wrap = document.getElementById('boardWrap');
+    var aw = wrap.clientWidth - 8, ah = wrap.clientHeight - 8;
+    var s = Math.min(aw / W, ah / H);
+    var cssW = Math.floor(W * s), cssH = Math.floor(H * s);
+    cv.style.width = cssW + 'px'; cv.style.height = cssH + 'px';
+    cv.width = Math.floor(cssW * dpr); cv.height = Math.floor(cssH * dpr);
+    redraw();
+  }
+  function k() { return cv.width / W; }
 
-if(left>0){const t=$('t');t.hidden=false;
- const tick=()=>{t.textContent=Math.floor(left/60)+':'+String(left%60).padStart(2,'0');t.classList.toggle('low',left<=10);
-  if(left<=0){send(true);return;}left--;setTimeout(tick,1000);};tick();}
-addEventListener('resize',fit);fit();
+  function drawStroke(s) {
+    var K = k(), p = s.p;
+    ctx.strokeStyle = COLORS[s.c]; ctx.fillStyle = COLORS[s.c];
+    ctx.lineWidth = WIDTHS[s.w] * K / 2.2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    if (p.length === 1) {
+      ctx.beginPath(); ctx.arc(p[0][0] * K, p[0][1] * K, ctx.lineWidth / 2, 0, 7); ctx.fill(); return;
+    }
+    ctx.beginPath(); ctx.moveTo(p[0][0] * K, p[0][1] * K);
+    for (var i = 1; i < p.length - 1; i++) {
+      var mx = (p[i][0] + p[i + 1][0]) / 2, my = (p[i][1] + p[i + 1][1]) / 2;
+      ctx.quadraticCurveTo(p[i][0] * K, p[i][1] * K, mx * K, my * K);
+    }
+    var l = p[p.length - 1]; ctx.lineTo(l[0] * K, l[1] * K); ctx.stroke();
+  }
+  function redraw() {
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
+    strokes.forEach(drawStroke);
+  }
+  function rawSize() {
+    var n = 0; strokes.forEach(function (s) { n += 2 + s.p.length * 2; }); return n;
+  }
+  function pos(e) {
+    var r = cv.getBoundingClientRect();
+    var x = Math.round((e.clientX - r.left) / r.width * W);
+    var y = Math.round((e.clientY - r.top) / r.height * H);
+    return [Math.max(0, Math.min(W, x)), Math.max(0, Math.min(H, y))];
+  }
+
+  var activeId = null;
+  cv.addEventListener('pointerdown', function (e) {
+    if (sent || activeId !== null) return;
+    e.preventDefault();
+    if (rawSize() + 4 > MAX_RAW) return;
+    activeId = e.pointerId;
+    try { cv.setPointerCapture(e.pointerId); } catch (x) {}
+    cur = { c: erasing ? 7 : color, w: erasing ? 3 : wIdx, p: [pos(e)] };
+    strokes.push(cur); redraw();
+  });
+  cv.addEventListener('pointermove', function (e) {
+    if (!cur || e.pointerId !== activeId) return;
+    e.preventDefault();
+    var evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+    if (!evs.length) evs = [e];
+    for (var i = 0; i < evs.length; i++) {
+      var pt = pos(evs[i]), l = cur.p[cur.p.length - 1];
+      if (Math.abs(pt[0] - l[0]) + Math.abs(pt[1] - l[1]) < 2) continue;
+      if (rawSize() + 2 > MAX_RAW) break;
+      cur.p.push(pt);
+    }
+    redraw();
+  });
+  function end(e) { if (e.pointerId !== activeId) return; activeId = null; cur = null; }
+  cv.addEventListener('pointerup', end);
+  cv.addEventListener('pointercancel', end);
+
+  // ===== الأدوات =====
+  var colorsEl = document.getElementById('colors'), widthsEl = document.getElementById('widths');
+  var eraserBtn = document.getElementById('eraser');
+  COLORS.forEach(function (c, i) {
+    var d = document.createElement('div');
+    d.className = 'sw';
+    d.style.background = c;
+    d.onclick = function () { color = i; erasing = false; sync(); };
+    colorsEl.appendChild(d);
+  });
+  UI_WIDTHS.slice().reverse().forEach(function (wi) {
+    var d = document.createElement('button');
+    d.type = 'button'; d.className = 'tool wd';
+    var sz = Math.max(6, WIDTHS[wi] * 0.9);
+    d.innerHTML = '<i style="width:' + sz + 'px;height:' + sz + 'px"></i>';
+    d.dataset.w = wi;
+    d.onclick = function () { wIdx = wi; sync(); };
+    widthsEl.appendChild(d);
+  });
+  eraserBtn.onclick = function () { erasing = !erasing; sync(); };
+  function sync() {
+    [].forEach.call(colorsEl.children, function (d, i) { d.classList.toggle('on', !erasing && i === color); });
+    [].forEach.call(widthsEl.children, function (d) { d.classList.toggle('on', +d.dataset.w === wIdx); });
+    eraserBtn.classList.toggle('on', erasing);
+  }
+  sync();
+  document.getElementById('undo').onclick = function () { if (!sent) { strokes.pop(); redraw(); } };
+
+  // ===== الإرسال =====
+  function encode() {
+    var bytes = [];
+    strokes.forEach(function (s) {
+      if (!s.p.length) return;
+      bytes.push(255, s.c * 4 + s.w);
+      s.p.forEach(function (pt) { bytes.push(Math.min(pt[0], 254), pt[1]); });
+    });
+    var bin = ''; bytes.forEach(function (b) { bin += String.fromCharCode(b); });
+    return btoa(bin);
+  }
+  var sendBtn = document.getElementById('send');
+  function send() {
+    if (sent) return; sent = true; sendBtn.disabled = true;
+    var data = encode();
+    try { if (tg) tg.disableClosingConfirmation(); } catch (e) {}
+    if (tg && tg.sendData) tg.sendData(data); else alert('افتح الصفحة من تيليجرام');
+  }
+  sendBtn.onclick = send;
+
+  // ===== العدّاد =====
+  var left = total, tEl = document.getElementById('timer');
+  tEl.textContent = left;
+  var iv = setInterval(function () {
+    left--; tEl.textContent = Math.max(0, left);
+    if (left <= 10) tEl.classList.add('low');
+    if (left <= 0) { clearInterval(iv); send(); }
+  }, 1000);
+
+  window.addEventListener('resize', fit);
+  window.addEventListener('orientationchange', function () { setTimeout(fit, 150); });
+  fit();
+})();
 </script>
 </body>
 </html>
