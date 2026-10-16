@@ -67,6 +67,25 @@
   #frame { border: 2.5px solid var(--blue); border-radius: 18px; padding: 0; background: #fff; overflow: hidden;
            box-shadow: 0 0 0 1px #0b2c8a, 0 0 18px rgba(30,107,255,.75), 0 0 40px rgba(30,107,255,.35); }
   #board { display: block; touch-action: none; }
+  #frame { position: relative; }
+  #mini { position: absolute; left: 6px; bottom: 6px; width: 46px; height: 32px; background: rgba(0,0,0,.35);
+          border: 1px solid rgba(255,255,255,.65); border-radius: 5px; pointer-events: none; }
+  #mini[hidden] { display: none; }
+  #miniV { position: absolute; border: 1.5px solid #29b6ff; background: rgba(41,182,255,.25); box-sizing: border-box; }
+  /* أزرار الزوم عائمة فوق اللوحة (زاوية يمين فوق) لتكون بمتناول الإصبع أثناء الرسم */
+  #zoomRow { position: absolute; top: 6px; right: 6px; z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 6px; direction: ltr; }
+  #zoomRow button { width: 40px; height: 40px; min-width: 0; padding: 0; border-radius: 12px; background: rgba(10,24,64,.82); border: 1.5px solid var(--blue);
+                    color: #fff; font: inherit; font-size: 22px; font-weight: 700; line-height: 1; touch-action: manipulation;
+                    display: flex; align-items: center; justify-content: center;
+                    box-shadow: 0 2px 8px rgba(0,0,0,.35); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+  #zoomRow button svg { width: 22px; height: 22px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  #zoomRow #zLbl { height: 26px; font-size: 13px; border-radius: 9px; }
+  #zoomRow button.on { border-color: var(--cyan); background: rgba(30,107,255,.9); box-shadow: 0 0 10px rgba(41,182,255,.8); }
+  #zoomRow button:disabled { opacity: .35; }
+  #cap { height: 5px; margin: -4px 8px 0; border-radius: 5px; background: rgba(255,255,255,.12); overflow: hidden; flex: none; }
+  #capFill { display: block; height: 100%; width: 0; border-radius: 5px; background: var(--cyan); transition: width .15s, background .15s; }
+  #cap.hot #capFill { background: #ff9800; }
+  #cap.full #capFill { background: #e53935; }
 
   .row { display: flex; gap: 8px; justify-content: space-between; align-items: center; }
   #colors { padding: 0 4px; }
@@ -79,9 +98,29 @@
           font-size: 14px; padding: 0 14px; touch-action: manipulation; box-shadow: inset 0 0 10px rgba(30,107,255,.15); }
   .tool svg { width: 22px; height: 22px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .tool.on { border-color: var(--cyan); box-shadow: 0 0 12px rgba(41,182,255,.7), inset 0 0 10px rgba(41,182,255,.25); }
-  .wd { width: 54px; padding: 0; }
+  .wd { width: 32px; padding: 0; flex: none; }
   .wd i { display: block; background: #fff; border-radius: 50%; }
-  #eraser, #undo { flex: 1.6; }
+  #eraser, #undo, #shapesBtn, #bgBtn, #rotBtn { flex: 1; min-width: 0; flex-direction: column; gap: 2px; font-size: 10.5px; padding: 0 2px; white-space: nowrap; }
+  #tools { gap: 5px; }
+  #widths { gap: 4px !important; }
+  .tool:disabled { opacity: .35; }
+  #eraser svg, #undo svg, #shapesBtn svg, #bgBtn svg, #rotBtn svg { width: 20px; height: 20px; }
+  #shapesBtn.on svg { stroke: var(--cyan); }
+  #shBack { position: absolute; inset: 0; z-index: 20; background: rgba(0,0,0,.28); }
+  #sheet { position: absolute; left: 8px; right: 8px; bottom: calc(env(safe-area-inset-bottom) + 8px); height: min(60%, 440px);
+           z-index: 21; background: #20232e; border: 1px solid rgba(255,255,255,.08); border-radius: 26px;
+           display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,.65); overflow: hidden; }
+  #sheet[hidden], #shBack[hidden] { display: none; }
+  #shHead { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,.08); flex: none; }
+  #shTitle { flex: 1; font-size: 20px; font-weight: 800; }
+  #shFree { height: 40px; padding: 0 14px; border-radius: 14px; border: 0; background: #2d313d; color: #fff; font: inherit; font-size: 14px; }
+  #shFree.on { background: #1e6bff; }
+  #shClose { width: 42px; height: 40px; border-radius: 14px; border: 0; background: #2d313d; color: #fff; font-size: 22px; line-height: 1; }
+  #shGrid { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; display: grid;
+            grid-template-columns: repeat(3, 1fr); grid-auto-rows: 62px; gap: 10px; padding: 14px 16px 18px; }
+  .shc { border: 0; border-radius: 16px; background: #2a2d39; display: flex; align-items: center; justify-content: center; touch-action: manipulation; padding: 0; }
+  .shc svg { width: 30px; height: 30px; fill: none; stroke: #fff; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .shc.on { background: #1e6bff; }
   #tools { direction: ltr; }
   #tools .tool { direction: rtl; }
 
@@ -104,10 +143,30 @@
     <div id="timer">--</div>
   </div>
 
-  <div id="boardWrap"><div id="frame"><canvas id="board"></canvas></div></div>
+  <div id="boardWrap"><div id="frame"><canvas id="board"></canvas><div id="mini" hidden><i id="miniV"></i></div>
+    <div id="zoomRow">
+      <button id="zIn" type="button" aria-label="تكبير">+</button>
+      <button id="zLbl" type="button" aria-label="إعادة الحجم">×1</button>
+      <button id="zOut" type="button" aria-label="تصغير" disabled>−</button>
+      <button id="zPan" type="button" aria-label="تحريك اللوحة" disabled><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg></button>
+    </div>
+  </div></div>
+  <div id="cap"><i id="capFill"></i></div>
 
   <div class="row" id="colors"></div>
   <div class="row" id="tools">
+    <button class="tool" id="shapesBtn" type="button">
+      <svg viewBox="0 0 24 24"><circle cx="16" cy="8" r="4.5"/><path d="M3 20l5.5-9.5L14 20z"/></svg>
+      <span id="shapesLbl">أشكال</span>
+    </button>
+    <button class="tool" id="rotBtn" type="button" disabled>
+      <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg>
+      تدوير
+    </button>
+    <button class="tool" id="bgBtn" type="button">
+      <svg viewBox="0 0 24 24"><path d="M5 11l6-6 7 7-6 6z"/><path d="M19.5 15c.9 1.4 1.8 2.4 1.8 3.3a1.8 1.8 0 0 1-3.6 0c0-.9.9-1.9 1.8-3.3z"/></svg>
+      خلفية
+    </button>
     <button class="tool" id="eraser" type="button">
       <svg viewBox="0 0 24 24"><path d="M3 15l9-9a2 2 0 0 1 3 0l5 5a2 2 0 0 1 0 3l-6 6H8l-5-5z"/><path d="M9 9l6 6"/></svg>
       ممسح
@@ -117,6 +176,15 @@
       تراجع
     </button>
     <span class="row" id="widths" style="gap:8px"></span>
+  </div>
+  <div id="shBack" hidden></div>
+  <div id="sheet" hidden>
+    <div id="shHead">
+      <span id="shTitle">الأشكال</span>
+      <button id="shFree" type="button">✏️ رسم حر</button>
+      <button id="shClose" type="button">✕</button>
+    </div>
+    <div id="shGrid"></div>
   </div>
   <button id="send" type="button">
     <svg viewBox="0 0 24 24"><path d="M21.5 3L2 11l6 2.2L10 20l3-4 5 3.5z"/></svg>
@@ -129,9 +197,9 @@
   // ===== نفس ثوابت البوت =====
   var COLORS = ['#1b1b1f', '#e53935', '#1e88e5', '#43a047', '#fdd835', '#fb8c00', '#8d5a3b', '#ffffff'];
   var WIDTHS = [3, 7, 14, 26];
-  var UI_WIDTHS = [1, 2, 3];     // السماكات الظاهرة بالواجهة (فهارس WIDTHS)
+  var UI_WIDTHS = [0, 1, 2, 3];     // السماكات الظاهرة بالواجهة (فهارس WIDTHS)
   var W = 254, H = 178;
-  var MAX_RAW = 3000;            // sendData حده 4096 بايت (base64) ≈ 3072 خام
+  var MAX_RAW = 3000;            // sendData حده 4096 حرف (base64) ≈ 3072 بايت خام
 
   var tg = window.Telegram && window.Telegram.WebApp;
   if (tg) {
@@ -145,12 +213,187 @@
 
   // منع أي تمرير/سحب على مستوى الصفحة
   ['touchmove', 'gesturestart', 'gesturechange', 'wheel', 'contextmenu'].forEach(function (ev) {
-    document.addEventListener(ev, function (e) { e.preventDefault(); }, { passive: false });
+    document.addEventListener(ev, function (e) {
+      if (e.target && e.target.closest && e.target.closest('#shGrid')) return;
+      e.preventDefault();
+    }, { passive: false });
   });
 
   var q = new URLSearchParams(location.search);
   document.getElementById('prompt').textContent = q.get('p') || 'ارسم أي شي من خيالك';
   var total = parseInt(q.get('t'), 10) || 75;
+
+  // ===== مكتبة الأشكال: كل شكل = خطوط بإحداثيات (0..1) تتمدد داخل المستطيل اللي يسحبه اللاعب =====
+  var PI = Math.PI;
+  function ell(cx, cy, rx, ry, a0, a1, n) {
+    var o = [];
+    for (var i = 0; i <= n; i++) { var a = (a0 + (a1 - a0) * i / n) * PI / 180; o.push([cx + rx * Math.cos(a), cy + ry * Math.sin(a)]); }
+    return o;
+  }
+  function quad(p0, c, p1, n) {
+    var o = [];
+    for (var i = 0; i <= n; i++) { var t = i / n, u = 1 - t;
+      o.push([u * u * p0[0] + 2 * u * t * c[0] + t * t * p1[0], u * u * p0[1] + 2 * u * t * c[1] + t * t * p1[1]]); }
+    return o;
+  }
+  function closed(a) { a.push(a[0].slice()); return a; }
+  function regular(n, rot) { var o = []; for (var i = 0; i < n; i++) { var a = (rot + 360 * i / n) * PI / 180; o.push([.5 + .5 * Math.cos(a), .5 + .5 * Math.sin(a)]); } return closed(o); }
+  function ray(o, d, c) { // مسافة خروج الشعاع من دائرة
+    var ox = o[0] - c[0], oy = o[1] - c[1], b = d[0] * ox + d[1] * oy, q = ox * ox + oy * oy - c[2] * c[2], disc = b * b - q;
+    return disc < 0 ? -1 : -b + Math.sqrt(disc);
+  }
+  function cloud() {
+    var cs = [[.27, .64, .2], [.5, .42, .27], [.75, .62, .22]], o = [.5, .6], pts = [];
+    for (var i = 0; i <= 64; i++) {
+      var a = (150 + 240 * i / 64) * PI / 180, d = [Math.cos(a), Math.sin(a)], t = 0;
+      cs.forEach(function (c) { var r = ray(o, d, c); if (r > t) t = r; });
+      pts.push([o[0] + d[0] * t, Math.min(o[1] + d[1] * t, .84)]);
+    }
+    return [closed(pts)];
+  }
+  function heart() {
+    var o = [];
+    for (var i = 0; i <= 48; i++) { var t = 2 * PI * i / 48;
+      o.push([16 * Math.pow(Math.sin(t), 3), -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t))]); }
+    return [o];
+  }
+  function starPts(n, ro, ri) { var o = []; for (var i = 0; i < 2 * n; i++) { var a = (-90 + 180 * i / n) * PI / 180, r = i % 2 ? ri : ro; o.push([.5 + r * Math.cos(a), .5 + r * Math.sin(a)]); } return closed(o); }
+  function bubble() {
+    var o = [[.12, 0], [.88, 0]];
+    o = o.concat(ell(.88, .12, .12, .12, -90, 0, 6), [[1, .66]], ell(.88, .66, .12, .12, 0, 90, 6), [[.5, .78], [.3, 1], [.3, .78], [.12, .78]],
+      ell(.12, .66, .12, .12, 90, 180, 6), [[0, .12]], ell(.12, .12, .12, .12, 180, 270, 6));
+    return [closed(o)];
+  }
+  function dropShape() {
+    var o = [];
+    for (var i = 0; i <= 44; i++) { var t = 2 * PI * i / 44; o.push([Math.sin(t) * Math.pow(Math.sin(t / 2), 1.3), -Math.cos(t)]); }
+    return [o];
+  }
+  function pinShape() {
+    var a = Math.acos(.38 / .62) * 180 / PI;
+    var outer = [[.5, 1]].concat(ell(.5, .38, .38, .38, 90 - a, 90 - a - (360 - 2 * a), 40));
+    return [closed(outer), ell(.5, .38, .14, .14, 0, 360, 16)];
+  }
+  function crescent() {
+    var d = .2, r1 = .5, r2 = .42, a = (d * d + r1 * r1 - r2 * r2) / (2 * d), h = Math.sqrt(r1 * r1 - a * a);
+    var a1 = Math.atan2(-h, a) * 180 / PI, a2 = Math.atan2(h, a - d) * 180 / PI;
+    var outer = ell(.5, .5, r1, r1, a1, a1 - (360 - 2 * Math.abs(a1)), 30);
+    var inner = ell(.5 + d, .5, r2, r2, a2, 360 - a2, 22);
+    return [closed(outer.concat(inner))];
+  }
+  function infinity() { var o = []; for (var i = 0; i <= 56; i++) { var t = 2 * PI * i / 56, s = 1 + Math.sin(t) * Math.sin(t); o.push([Math.cos(t) / s, Math.sin(t) * Math.cos(t) / s]); } return [o]; }
+  function wave() { var o = []; for (var i = 0; i <= 40; i++) { var u = i / 40; o.push([u, .5 - .5 * Math.sin(u * 4 * PI)]); } return [o]; }
+  function leaf() { return [closed(quad([0, 1], [0, 0], [1, 0], 14).concat(quad([1, 0], [1, 1], [0, 1], 14).slice(1))), [[0, 1], [.62, .38]]]; }
+  function shield() {
+    return [closed([[.5, 0], [1, .17], [1, .5]].concat(quad([1, .5], [1, .82], [.5, 1], 8).slice(1), quad([.5, 1], [0, .82], [0, .5], 8).slice(1), [[0, .17]]))];
+  }
+  function semi() { return [closed(ell(.5, 1, .5, 1, 180, 360, 24))]; }
+  function arrowHead(x, y, ang, hl) {
+    var s = 28 * PI / 180;
+    return [[x - hl * Math.cos(ang - s), y - hl * Math.sin(ang - s)], [x - hl * Math.cos(ang + s), y - hl * Math.sin(ang + s)]];
+  }
+  // sq = يحافظ على النسبة 1:1 ، seg = خط بين نقطتين (البداية والنهاية) ، ar = نسبة ارتفاع/عرض للأيقونة
+  var SHAPES = [
+    { id: 'circle', sq: 1, g: function () { return [ell(.5, .5, .5, .5, 0, 360, 44)]; } },
+    { id: 'square', sq: 1, g: function () { return [closed([[0, 0], [1, 0], [1, 1], [0, 1]])]; } },
+    { id: 'line', seg: 1, g: function (x0, y0, x1, y1) { return [[[x0, y0], [x1, y1]]]; } },
+    { id: 'diamond', g: function () { return [closed([[.5, 0], [1, .5], [.5, 1], [0, .5]])]; } },
+    { id: 'arrow', seg: 1, g: function (x0, y0, x1, y1) {
+        var an = Math.atan2(y1 - y0, x1 - x0), hl = Math.min(16, Math.hypot(x1 - x0, y1 - y0) * .45), h = arrowHead(x1, y1, an, hl);
+        return [[[x0, y0], [x1, y1], h[0], [x1, y1], h[1]]]; } },
+    { id: 'triangle', g: function () { return [closed([[.5, 0], [1, 1], [0, 1]])]; } },
+    { id: 'cloud', ar: .75, g: cloud },
+    { id: 'heart', g: heart },
+    { id: 'star', g: function () { return [starPts(5, .5, .21)]; } },
+    { id: 'check', g: function () { return [[[0, .55], [.36, .92], [1, .1]]]; } },
+    { id: 'bolt', g: function () { return [closed([[.62, 0], [.12, .58], [.46, .58], [.36, 1], [.88, .38], [.54, .38]])]; } },
+    { id: 'bubble', ar: .85, g: bubble },
+    { id: 'target', sq: 1, g: function () { return [ell(.5, .5, .5, .5, 0, 360, 40), ell(.5, .5, .32, .32, 0, 360, 30), ell(.5, .5, .12, .12, 0, 360, 16)]; } },
+    { id: 'x', g: function () { return [[[0, 0], [1, 1]], [[1, 0], [0, 1]]]; } },
+    { id: 'plus', g: function () { return [[[.5, 0], [.5, 1]], [[0, .5], [1, .5]]]; } },
+    { id: 'hexagon', ar: .86, g: function () { return [closed([[.25, 0], [.75, 0], [1, .5], [.75, 1], [.25, 1], [0, .5]])]; } },
+    { id: 'pentagon', g: function () { return [regular(5, -90)]; } },
+    { id: 'oval', ar: .6, g: function () { return [ell(.5, .5, .5, .5, 0, 360, 44)]; } },
+    { id: 'parallelogram', ar: .7, g: function () { return [closed([[.25, 0], [1, 0], [.75, 1], [0, 1]])]; } },
+    { id: 'trapezoid', ar: .7, g: function () { return [closed([[.25, 0], [.75, 0], [1, 1], [0, 1]])]; } },
+    { id: 'octagon', g: function () { return [closed([[.29, 0], [.71, 0], [1, .29], [1, .71], [.71, 1], [.29, 1], [0, .71], [0, .29]])]; } },
+    { id: 'leaf', g: leaf },
+    { id: 'drop', ar: 1.25, g: dropShape },
+    { id: 'crescent', g: crescent },
+    { id: 'flag', g: function () { return [[[0, 0], [0, 1]], [[0, 0], [1, 0], [.78, .3], [1, .6], [0, .6]]]; } },
+    { id: 'crosshair', sq: 1, g: function () { return [ell(.5, .5, .26, .26, 0, 360, 28), [[.5, 0], [.5, .24]], [[.5, .76], [.5, 1]], [[0, .5], [.24, .5]], [[.76, .5], [1, .5]]]; } },
+    { id: 'shield', g: shield },
+    { id: 'cube', g: function () { return [closed([[.5, 0], [1, .25], [1, .75], [.5, 1], [0, .75], [0, .25]]), [[0, .25], [.5, .5], [1, .25], [.5, .5], [.5, 1]]]; } },
+    { id: 'wave', ar: .5, g: wave },
+    { id: 'infinity', ar: .5, g: infinity },
+    { id: 'burst', g: function () { return [starPts(8, .5, .2)]; } },
+    { id: 'pin', ar: 1.25, g: pinShape },
+    { id: 'darrow', seg: 1, g: function (x0, y0, x1, y1) {
+        var an = Math.atan2(y1 - y0, x1 - x0), hl = Math.min(14, Math.hypot(x1 - x0, y1 - y0) * .3), a = arrowHead(x1, y1, an, hl), b = arrowHead(x0, y0, an + PI, hl);
+        return [[b[0], [x0, y0], b[1], [x0, y0], [x1, y1], a[0], [x1, y1], a[1]]]; } },
+    { id: 'rect', ar: .65, g: function () { return [closed([[0, 0], [1, 0], [1, 1], [0, 1]])]; } },
+    { id: 'rtriangle', g: function () { return [closed([[0, 0], [0, 1], [1, 1]])]; } },
+    { id: 'semi', ar: .55, g: semi }
+  ];
+  var SHAPE_BY_ID = {}; SHAPES.forEach(function (s) { SHAPE_BY_ID[s.id] = s; });
+
+  var shapeRot = 0; // اتجاه الشكل: 0..3 × 90° مع عقارب الساعة
+  function rotUnit(polys, r) {
+    for (var i = 0; i < (r & 3); i++) polys = polys.map(function (pl) { return pl.map(function (p) { return [1 - p[1], p[0]]; }); });
+    return polys;
+  }
+  function normPolys(polys) {
+    var x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    polys.forEach(function (pl) { pl.forEach(function (p) { if (p[0] < x0) x0 = p[0]; if (p[0] > x1) x1 = p[0]; if (p[1] < y0) y0 = p[1]; if (p[1] > y1) y1 = p[1]; }); });
+    var w = (x1 - x0) || 1, h = (y1 - y0) || 1;
+    return polys.map(function (pl) { return pl.map(function (p) { return [(p[0] - x0) / w, (p[1] - y0) / h]; }); });
+  }
+  // يبني الخطوط الفعلية (بإحداثيات اللوح) للشكل من نقطة البداية x0,y0 إلى نقطة السحب x1,y1
+  function buildShape(sh, x0, y0, x1, y1) {
+    var dx = x1 - x0, dy = y1 - y0, tiny = Math.abs(dx) < 6 && Math.abs(dy) < 6, polys, rot = sh.seg ? 0 : (shapeRot & 3);
+    if (sh.seg) {
+      if (tiny) { x1 = x0 + 52; y1 = y0; }
+      polys = sh.g(x0, y0, x1, y1);
+    } else {
+      var ar = sh.ar || 1, L, T, w, h;
+      if (tiny) { w = 46; h = 46 * ar; if (rot & 1) { var tt = w; w = h; h = tt; } L = x0 - w / 2; T = y0 - h / 2; }
+      else {
+        if (sh.sq) {
+          var m = Math.max(Math.abs(dx), Math.abs(dy)), sx = dx < 0 ? -1 : 1, sy = dy < 0 ? -1 : 1;
+          m = Math.min(m, sx > 0 ? W - x0 : x0, sy > 0 ? H - y0 : y0);
+          x1 = x0 + sx * m; y1 = y0 + sy * m;
+        }
+        L = Math.min(x0, x1); T = Math.min(y0, y1); w = Math.abs(x1 - x0); h = Math.abs(y1 - y0);
+      }
+      L = Math.max(0, Math.min(W - w, L)); T = Math.max(0, Math.min(H - h, T));
+      polys = rotUnit(normPolys(sh.g()), rot).map(function (pl) { return pl.map(function (p) { return [L + p[0] * w, T + p[1] * h]; }); });
+    }
+    return polys.map(function (pl) {
+      var out = [];
+      pl.forEach(function (p) {
+        var q = [Math.max(0, Math.min(W, Math.round(p[0]))), Math.max(0, Math.min(H, Math.round(p[1])))], l = out[out.length - 1];
+        if (!l || l[0] !== q[0] || l[1] !== q[1]) out.push(q);
+      });
+      return out;
+    });
+  }
+  // أيقونة SVG للشكل (من نفس بياناته)
+  function shapeIcon(sh, rot) {
+    var polys, ar = sh.ar || 1;
+    if (sh.seg) polys = buildShape(sh, 0, 0, 0, 0) && sh.g(.12, .88, .88, .12);
+    else polys = rotUnit(normPolys(sh.g()), rot || 0);
+    var pad = 3.5, S = 17, w = S, h = S * ar;
+    if (rot & 1) { w = S * ar; h = S; }
+    var ox = pad + (S - w) / 2, oy = pad + (S - h) / 2, d = '';
+    polys.forEach(function (pl) {
+      pl.forEach(function (p, i) {
+        var x, y;
+        if (sh.seg) { x = pad + p[0] * S; y = pad + p[1] * S; } else { x = ox + p[0] * w; y = oy + p[1] * h; }
+        d += (i ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1);
+      });
+    });
+    return '<svg viewBox="0 0 24 24"><path d="' + d + '"/></svg>';
+  }
 
   // ===== اللوح =====
   var cv = document.getElementById('board'), ctx = cv.getContext('2d');
@@ -167,15 +410,40 @@
     redraw();
   }
   function k() { return cv.width / W; }
+  // ===== الزوم والتحريك =====
+  var vz = 1, vx = 0, vy = 0, panMode = false, Z_STEPS = [1, 1.5, 2, 3, 4, 6];
+  function clampView() {
+    vz = Math.max(1, Math.min(6, vz));
+    vx = Math.max(0, Math.min(W - W / vz, vx));
+    vy = Math.max(0, Math.min(H - H / vz, vy));
+  }
+  function updateZoomUI() {
+    document.getElementById('zLbl').textContent = '×' + (Math.round(vz * 10) / 10);
+    document.getElementById('zOut').disabled = vz <= 1.001;
+    document.getElementById('zIn').disabled = vz >= 5.999;
+    var zp = document.getElementById('zPan'); zp.disabled = vz <= 1.001; zp.classList.toggle('on', panMode && vz > 1.001);
+    var mini = document.getElementById('mini'), mv = document.getElementById('miniV');
+    mini.hidden = vz <= 1.001;
+    mv.style.left = (vx / W * 100) + '%'; mv.style.top = (vy / H * 100) + '%';
+    mv.style.width = (100 / vz) + '%'; mv.style.height = (100 / vz) + '%';
+  }
+  function setZoomAbout(nz, bx, by, fx, fy) { // يثبّت النقطة (bx,by) تحت موضع الشاشة (fx,fy)
+    vz = nz; clampView();
+    vx = bx - fx * W / vz; vy = by - fy * H / vz; clampView();
+    redraw();
+  }
 
+  var curBg = '#ffffff';
   function drawStroke(s) {
-    var K = k(), p = s.p;
-    ctx.strokeStyle = COLORS[s.c]; ctx.fillStyle = COLORS[s.c];
+    if (s.bg) return;
+    var K = k(), p = s.p, col = s.e ? curBg : COLORS[s.c];
+    ctx.strokeStyle = col; ctx.fillStyle = col;
     ctx.lineWidth = WIDTHS[s.w] * K / 2.2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     if (p.length === 1) {
       ctx.beginPath(); ctx.arc(p[0][0] * K, p[0][1] * K, ctx.lineWidth / 2, 0, 7); ctx.fill(); return;
     }
     ctx.beginPath(); ctx.moveTo(p[0][0] * K, p[0][1] * K);
+    if (s.k) { for (var j = 1; j < p.length; j++) ctx.lineTo(p[j][0] * K, p[j][1] * K); ctx.stroke(); return; }
     for (var i = 1; i < p.length - 1; i++) {
       var mx = (p[i][0] + p[i + 1][0]) / 2, my = (p[i][1] + p[i + 1][1]) / 2;
       ctx.quadraticCurveTo(p[i][0] * K, p[i][1] * K, mx * K, my * K);
@@ -183,45 +451,179 @@
     var l = p[p.length - 1]; ctx.lineTo(l[0] * K, l[1] * K); ctx.stroke();
   }
   function redraw() {
-    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
+    curBg = '#ffffff';
+    strokes.forEach(function (s) { if (s.bg) curBg = COLORS[s.c]; });
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = curBg; ctx.fillRect(0, 0, cv.width, cv.height);
+    var KK = k(); ctx.setTransform(vz, 0, 0, vz, -vx * KK * vz, -vy * KK * vz);
     strokes.forEach(drawStroke);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    updateZoomUI();
+  }
+  // ترميز v2: أول نقطة مطلقة (254,x,y) والباقي فروقات بايت واحد لكل نقطة (إذا الفرق ≤7)
+  function ex(p) { return Math.min(p[0], 253); }
+  function strokeBytes(s, out) {
+    var n = 2, lx = 0, ly = 0;
+    if (out) out.push(255, s.c * 4 + s.w + (s.k ? 32 : 0) + (s.e ? 128 : 0));
+    for (var i = 0; i < s.p.length; i++) {
+      var x = ex(s.p[i]), y = s.p[i][1];
+      var dx = x - lx, dy = y - ly;
+      if (i > 0 && Math.abs(dx) <= 7 && Math.abs(dy) <= 7) {
+        n += 1; if (out) out.push((dx + 7) * 15 + (dy + 7));
+      } else {
+        n += 3; if (out) out.push(254, x, y);
+      }
+      lx = x; ly = y;
+    }
+    return n;
   }
   function rawSize() {
-    var n = 0; strokes.forEach(function (s) { n += 2 + s.p.length * 2; }); return n;
+    var n = 0, hasBg = false;
+    strokes.forEach(function (s) { if (s.bg) hasBg = true; else if (s.p.length) n += strokeBytes(s); });
+    return n + (hasBg ? 2 : 0);
+  }
+  function updateCap() {
+    var r = rawSize() / MAX_RAW, f = document.getElementById('capFill'), c = document.getElementById('cap');
+    f.style.width = Math.min(100, Math.round(r * 100)) + '%';
+    c.classList.toggle('hot', r > 0.8); c.classList.toggle('full', r > 0.97);
+  }
+  // تبسيط الخط (Ramer–Douglas–Peucker) يقلل النقاط بدون ما يتغير الشكل
+  function rdp(pts, eps) {
+    var n = pts.length; if (n < 3) return pts;
+    var keep = new Array(n); keep[0] = keep[n - 1] = true;
+    var stack = [[0, n - 1]];
+    while (stack.length) {
+      var se = stack.pop(), a = se[0], b = se[1], dmax = 0, idx = -1;
+      var ax = pts[a][0], ay = pts[a][1], dx = pts[b][0] - ax, dy = pts[b][1] - ay, L = Math.sqrt(dx * dx + dy * dy);
+      for (var i = a + 1; i < b; i++) {
+        var d = L === 0 ? Math.hypot(pts[i][0] - ax, pts[i][1] - ay)
+                        : Math.abs(dy * (pts[i][0] - ax) - dx * (pts[i][1] - ay)) / L;
+        if (d > dmax) { dmax = d; idx = i; }
+      }
+      if (idx > -1 && dmax > eps) { keep[idx] = true; stack.push([a, idx], [idx, b]); }
+    }
+    var out = []; for (var k = 0; k < n; k++) if (keep[k]) out.push(pts[k]);
+    return out;
+  }
+  function compact(eps) { strokes.forEach(function (s) { s.p = rdp(s.p, eps); }); }
+  // يضمن مكان لـ n بايت: يضغط الرسمة تدريجياً بدل ما يوقف الرسم
+  function ensureRoom(n) {
+    if (rawSize() + n <= MAX_RAW) return true;
+    var steps = [0.8, 1.3, 2, 3, 4.5];
+    for (var i = 0; i < steps.length; i++) { compact(steps[i]); if (rawSize() + n <= MAX_RAW) { redraw(); return true; } }
+    return false;
+  }
+  var warnT = null;
+  function warnFull() {
+    var c = document.getElementById('cap'); c.classList.add('full');
+    if (tg && tg.HapticFeedback) { try { tg.HapticFeedback.notificationOccurred('warning'); } catch (e) {} }
+    clearTimeout(warnT); warnT = setTimeout(updateCap, 600);
   }
   function pos(e) {
     var r = cv.getBoundingClientRect();
-    var x = Math.round((e.clientX - r.left) / r.width * W);
-    var y = Math.round((e.clientY - r.top) / r.height * H);
+    var x = Math.round(vx + (e.clientX - r.left) / r.width * W / vz);
+    var y = Math.round(vy + (e.clientY - r.top) / r.height * H / vz);
     return [Math.max(0, Math.min(W, x)), Math.max(0, Math.min(H, y))];
   }
 
-  var activeId = null;
+  var shapeId = null, shp = null, gid = 0;
+  function shapeUpdate(pt) {
+    var polys = buildShape(shp.sh, shp.x0, shp.y0, pt[0], pt[1]);
+    strokes.length = shp.base;
+    polys.forEach(function (pl) { strokes.push({ c: color, w: wIdx, k: 1, g: shp.g, p: pl }); });
+    if (!ensureRoom(0)) {
+      strokes.length = shp.base;
+      (shp.last || []).forEach(function (s) { strokes.push({ c: s.c, w: s.w, k: 1, g: s.g, p: s.p.slice() }); });
+      warnFull();
+    } else {
+      shp.last = strokes.slice(shp.base).map(function (s) { return { c: s.c, w: s.w, g: s.g, p: s.p.slice() }; });
+    }
+    redraw(); updateCap();
+  }
+  var activeId = null, pts = {}, gest = null, pan = null;
+  function fr(x, y) { var r = cv.getBoundingClientRect(); return [(x - r.left) / r.width, (y - r.top) / r.height]; }
+  function twoPts() { var ids = Object.keys(pts); return ids.length >= 2 ? [pts[ids[0]], pts[ids[1]]] : null; }
+  function cancelDrawing() {
+    if (shp) { strokes.length = shp.base; shp = null; }
+    if (cur) { var ix = strokes.indexOf(cur); if (ix > -1) strokes.splice(ix, 1); cur = null; }
+    activeId = null; redraw(); updateCap();
+  }
+  function startGesture() {
+    var t = twoPts(); if (!t) return;
+    var c = fr((t[0].x + t[1].x) / 2, (t[0].y + t[1].y) / 2);
+    gest = { d0: Math.hypot(t[0].x - t[1].x, t[0].y - t[1].y) || 1, z0: vz, bx: vx + c[0] * W / vz, by: vy + c[1] * H / vz };
+  }
+  function updateGesture() {
+    var t = twoPts(); if (!t || !gest) return;
+    var c = fr((t[0].x + t[1].x) / 2, (t[0].y + t[1].y) / 2), d = Math.hypot(t[0].x - t[1].x, t[0].y - t[1].y);
+    setZoomAbout(gest.z0 * d / gest.d0, gest.bx, gest.by, c[0], c[1]);
+  }
+  function lift(e) {
+    delete pts[e.pointerId];
+    if (gest && Object.keys(pts).length < 2) gest = null;
+    if (pan && pan.id === e.pointerId) pan = null;
+  }
   cv.addEventListener('pointerdown', function (e) {
+    pts[e.pointerId] = { x: e.clientX, y: e.clientY };
+    if (gest) return;
+    if (Object.keys(pts).length >= 2) { e.preventDefault(); cancelDrawing(); pan = null; startGesture(); return; }
+    if (panMode && vz > 1.001 && !sent) {
+      e.preventDefault();
+      try { cv.setPointerCapture(e.pointerId); } catch (x) {}
+      var f0 = fr(e.clientX, e.clientY); pan = { id: e.pointerId, fx: f0[0], fy: f0[1], vx: vx, vy: vy };
+      return;
+    }
     if (sent || activeId !== null) return;
     e.preventDefault();
-    if (rawSize() + 4 > MAX_RAW) return;
+    if (!ensureRoom(4)) { warnFull(); return; }
     activeId = e.pointerId;
     try { cv.setPointerCapture(e.pointerId); } catch (x) {}
-    cur = { c: erasing ? 7 : color, w: erasing ? 3 : wIdx, p: [pos(e)] };
+    if (shapeId && !erasing) {
+      var p0 = pos(e);
+      shp = { sh: SHAPE_BY_ID[shapeId], x0: p0[0], y0: p0[1], base: strokes.length, g: ++gid, last: null };
+      shapeUpdate(p0);
+      return;
+    }
+    cur = { c: erasing ? 7 : color, w: erasing ? 3 : wIdx, e: erasing ? 1 : 0, p: [pos(e)] };
     strokes.push(cur); redraw();
   });
   cv.addEventListener('pointermove', function (e) {
-    if (!cur || e.pointerId !== activeId) return;
+    if (pts[e.pointerId]) { pts[e.pointerId].x = e.clientX; pts[e.pointerId].y = e.clientY; }
+    if (gest) { e.preventDefault(); updateGesture(); return; }
+    if (pan) {
+      if (e.pointerId === pan.id) {
+        e.preventDefault(); var f1 = fr(e.clientX, e.clientY);
+        vx = pan.vx - (f1[0] - pan.fx) * W / vz; vy = pan.vy - (f1[1] - pan.fy) * H / vz; clampView(); redraw();
+      }
+      return;
+    }
+    if (e.pointerId !== activeId) return;
+    if (shp) { e.preventDefault(); shapeUpdate(pos(e)); return; }
+    if (!cur) return;
     e.preventDefault();
     var evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
     if (!evs.length) evs = [e];
     for (var i = 0; i < evs.length; i++) {
       var pt = pos(evs[i]), l = cur.p[cur.p.length - 1];
       if (Math.abs(pt[0] - l[0]) + Math.abs(pt[1] - l[1]) < 2) continue;
-      if (rawSize() + 2 > MAX_RAW) break;
+      if (!ensureRoom(2)) { warnFull(); break; }
       cur.p.push(pt);
     }
-    redraw();
+    redraw(); updateCap();
   });
-  function end(e) { if (e.pointerId !== activeId) return; activeId = null; cur = null; }
-  cv.addEventListener('pointerup', end);
-  cv.addEventListener('pointercancel', end);
+  function end(e) {
+    if (e.pointerId !== activeId) return;
+    if (shp) {
+      if (e.type === 'pointerup') shapeUpdate(pos(e));
+      for (var si = shp.base; si < strokes.length; si++) strokes[si].p = rdp(strokes[si].p, 0.2);
+      shp = null; activeId = null; redraw(); updateCap();
+      return;
+    }
+    if (cur) cur.p = rdp(cur.p, 0.7);
+    activeId = null; cur = null; redraw(); updateCap();
+  }
+  cv.addEventListener('pointerup', function (e) { lift(e); end(e); });
+  cv.addEventListener('pointercancel', function (e) { lift(e); end(e); });
 
   // ===== الأدوات =====
   var colorsEl = document.getElementById('colors'), widthsEl = document.getElementById('widths');
@@ -236,31 +638,74 @@
   UI_WIDTHS.slice().reverse().forEach(function (wi) {
     var d = document.createElement('button');
     d.type = 'button'; d.className = 'tool wd';
-    var sz = Math.max(6, WIDTHS[wi] * 0.9);
+    var sz = Math.max(4, WIDTHS[wi] * 0.9);
     d.innerHTML = '<i style="width:' + sz + 'px;height:' + sz + 'px"></i>';
     d.dataset.w = wi;
     d.onclick = function () { wIdx = wi; sync(); };
     widthsEl.appendChild(d);
   });
-  eraserBtn.onclick = function () { erasing = !erasing; sync(); };
+  eraserBtn.onclick = function () { erasing = !erasing; if (erasing) shapeId = null; sync(); };
   function sync() {
     [].forEach.call(colorsEl.children, function (d, i) { d.classList.toggle('on', !erasing && i === color); });
     [].forEach.call(widthsEl.children, function (d) { d.classList.toggle('on', +d.dataset.w === wIdx); });
     eraserBtn.classList.toggle('on', erasing);
+    var sb = document.getElementById('shapesBtn');
+    sb.classList.toggle('on', !!shapeId && !erasing);
+    sb.querySelector('svg').outerHTML = shapeId ? shapeIcon(SHAPE_BY_ID[shapeId], shapeRot) : SHAPES_BTN_ICON;
+    document.getElementById('rotBtn').disabled = !(shapeId && !erasing && !SHAPE_BY_ID[shapeId].seg);
+    document.getElementById('shFree').classList.toggle('on', !shapeId);
+    [].forEach.call(document.getElementById('shGrid').children, function (b) { b.classList.toggle('on', b.dataset.id === shapeId); });
   }
+  // ===== لوحة الأشكال =====
+  var SHAPES_BTN_ICON = document.querySelector('#shapesBtn svg').outerHTML;
+  var shGrid = document.getElementById('shGrid'), sheet = document.getElementById('sheet'), shBack = document.getElementById('shBack');
+  SHAPES.forEach(function (sh) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'shc'; b.dataset.id = sh.id; b.innerHTML = shapeIcon(sh);
+    b.onclick = function () { if (shapeId !== sh.id) shapeRot = 0; shapeId = sh.id; erasing = false; closeSheet(); sync(); };
+    shGrid.appendChild(b);
+  });
+  function openSheet() { if (sent) return; sheet.hidden = false; shBack.hidden = false; sync(); }
+  function closeSheet() { sheet.hidden = true; shBack.hidden = true; }
+  document.getElementById('shapesBtn').onclick = openSheet;
+  function zoomStep(dir) {
+    var nz = vz;
+    if (dir > 0) { for (var i = 0; i < Z_STEPS.length; i++) if (Z_STEPS[i] > vz + 0.01) { nz = Z_STEPS[i]; break; } }
+    else { for (var j = Z_STEPS.length - 1; j >= 0; j--) if (Z_STEPS[j] < vz - 0.01) { nz = Z_STEPS[j]; break; } }
+    setZoomAbout(nz, vx + W / vz / 2, vy + H / vz / 2, .5, .5);
+    if (vz <= 1.001) panMode = false;
+    updateZoomUI();
+  }
+  document.getElementById('zIn').onclick = function () { zoomStep(1); };
+  document.getElementById('zOut').onclick = function () { zoomStep(-1); };
+  document.getElementById('zLbl').onclick = function () { vz = 1; vx = 0; vy = 0; panMode = false; redraw(); };
+  document.getElementById('zPan').onclick = function () { panMode = !panMode; updateZoomUI(); };
+  document.getElementById('rotBtn').onclick = function () { shapeRot = (shapeRot + 1) & 3; sync(); };
+  document.getElementById('bgBtn').onclick = function () {
+    if (sent || curBg === COLORS[color]) return;
+    if (!ensureRoom(2)) { warnFull(); return; }
+    strokes.push({ bg: 1, c: color, w: 0, p: [] });
+    redraw(); updateCap();
+  };
+  document.getElementById('shClose').onclick = closeSheet;
+  shBack.onclick = closeSheet;
+  document.getElementById('shFree').onclick = function () { shapeId = null; closeSheet(); sync(); };
   sync();
-  document.getElementById('undo').onclick = function () { if (!sent) { strokes.pop(); redraw(); } };
+  document.getElementById('undo').onclick = function () {
+    if (sent) return;
+    var last = strokes.pop();
+    if (last && last.g) while (strokes.length && strokes[strokes.length - 1].g === last.g) strokes.pop();
+    redraw(); updateCap();
+  };
 
   // ===== الإرسال =====
   function encode() {
     var bytes = [];
-    strokes.forEach(function (s) {
-      if (!s.p.length) return;
-      bytes.push(255, s.c * 4 + s.w);
-      s.p.forEach(function (pt) { bytes.push(Math.min(pt[0], 254), pt[1]); });
-    });
+    var bgC = -1; strokes.forEach(function (s) { if (s.bg) bgC = s.c; });
+    if (bgC >= 0) bytes.push(255, 64 + bgC);
+    strokes.forEach(function (s) { if (!s.bg && s.p.length) strokeBytes(s, bytes); });
     var bin = ''; bytes.forEach(function (b) { bin += String.fromCharCode(b); });
-    return btoa(bin);
+    return '2.' + btoa(bin);
   }
   var sendBtn = document.getElementById('send');
   function send() {
