@@ -126,37 +126,43 @@
     cell = Math.max(10, Math.floor(Math.min(maxW / cols, maxH / rows)));
     cv.style.width = cell * cols + 'px'; cv.style.height = cell * rows + 'px';
     cv.width = cell * cols * dpr; cv.height = cell * rows * dpr;
+    buildStatic(); dirty = true;
+  }
+
+  // الخلفية والجدران ترسم مرة وحدة بكاش (الرسم المتكرر للتوهج كان سبب التعليق عند الحركة السريعة)
+  var wallCv = document.createElement('canvas'), dirty = true;
+  function buildStatic() {
+    wallCv.width = cv.width; wallCv.height = cv.height;
+    var c2 = wallCv.getContext('2d'), K = cell * dpr;
+    c2.fillStyle = '#040916'; c2.fillRect(0, 0, wallCv.width, wallCv.height);
+    c2.strokeStyle = '#1e6bff'; c2.lineWidth = Math.max(2, K * 0.1); c2.lineCap = 'round'; c2.shadowColor = '#29b6ff'; c2.shadowBlur = K * 0.25;
+    c2.beginPath();
+    for (var y = 0; y < rows; y++) for (var x = 0; x < cols; x++) {
+      var c = cells[y * cols + x], X = x * K, Y = y * K;
+      if (c & N) { c2.moveTo(X, Y); c2.lineTo(X + K, Y); }
+      if (c & W) { c2.moveTo(X, Y); c2.lineTo(X, Y + K); }
+      if (y === rows - 1 && (c & S)) { c2.moveTo(X, Y + K); c2.lineTo(X + K, Y + K); }
+      if (x === cols - 1 && (c & E)) { c2.moveTo(X + K, Y); c2.lineTo(X + K, Y + K); }
+    }
+    c2.stroke();
   }
 
   function draw() {
     var K = cell * dpr, w = cv.width, h = cv.height;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.fillStyle = '#040916'; ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(wallCv, 0, 0);
     var ex = exitX * K, ey = exitY * K, pulse = 0.5 + 0.5 * Math.sin(Date.now() / 260);
-    ctx.fillStyle = 'rgba(61,220,132,' + (0.18 + 0.2 * pulse) + ')'; ctx.fillRect(ex, ey, K, K);
+    ctx.fillStyle = 'rgba(61,220,132,' + (0.18 + 0.2 * pulse) + ')'; ctx.fillRect(ex + K * 0.1, ey + K * 0.1, K * 0.8, K * 0.8);
     ctx.fillStyle = '#3ddc84'; ctx.beginPath(); ctx.arc(ex + K / 2, ey + K / 2, K * 0.22, 0, 7); ctx.fill();
-    ctx.strokeStyle = 'rgba(41,182,255,.45)'; ctx.lineWidth = K * 0.22; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.strokeStyle = 'rgba(41,182,255,.5)'; ctx.lineWidth = K * 0.2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     ctx.beginPath(); path.forEach(function (p, i) { var x = (p[0] + .5) * K, y = (p[1] + .5) * K; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke();
-    ctx.strokeStyle = '#1e6bff'; ctx.lineWidth = Math.max(2, K * 0.1); ctx.shadowColor = '#29b6ff'; ctx.shadowBlur = K * 0.25;
-    ctx.beginPath();
-    for (var y = 0; y < rows; y++) for (var x = 0; x < cols; x++) {
-      var c = cells[y * cols + x], X = x * K, Y = y * K;
-      if (c & N) { ctx.moveTo(X, Y); ctx.lineTo(X + K, Y); }
-      if (c & W) { ctx.moveTo(X, Y); ctx.lineTo(X, Y + K); }
-      if (y === rows - 1 && (c & S)) { ctx.moveTo(X, Y + K); ctx.lineTo(X + K, Y + K); }
-      if (x === cols - 1 && (c & E)) { ctx.moveTo(X + K, Y); ctx.lineTo(X + K, Y + K); }
-    }
-    ctx.stroke(); ctx.shadowBlur = 0;
-    var bx = (px + .5) * K, by = (py + .5) * K;
-    ctx.shadowColor = '#ffffff'; ctx.shadowBlur = K * 0.5; ctx.fillStyle = '#ffffff';
-    ctx.beginPath(); ctx.arc(bx, by, K * 0.27, 0, 7); ctx.fill(); ctx.shadowBlur = 0;
-    var fog = LEVELS[lvl].fog;
+    var bx = (px + .5) * K, by = (py + .5) * K, fog = LEVELS[lvl].fog;
     if (fog && phase !== 'done') {
       var R = fog * K, g = ctx.createRadialGradient(bx, by, R * 0.45, bx, by, R);
       g.addColorStop(0, 'rgba(4,9,22,0)'); g.addColorStop(0.85, 'rgba(4,9,22,0.97)'); g.addColorStop(1, 'rgba(4,9,22,1)');
       ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-      ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(bx, by, K * 0.27, 0, 7); ctx.fill();
     }
+    ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(bx, by, K * 0.27, 0, 7); ctx.fill();
   }
 
   function now() { return Date.now() + skew; }
@@ -186,13 +192,13 @@
     var L = path.length;
     if (L > 1 && path[L - 2][0] === px && path[L - 2][1] === py) path.pop(); else path.push([px, py]);
     moves++; $('moves').textContent = moves;
-    if (navigator.vibrate) { try { navigator.vibrate(8); } catch (e) {} }
+    dirty = true;
     if (px === exitX && py === exitY) win();
     return true;
   }
 
   function win() {
-    phase = 'done'; tFinish = now() - beginAt;
+    phase = 'done'; tFinish = now() - beginAt; $('time').textContent = fmt(tFinish); dirty = true;
     cover(true, 'ok', 'وصلت! 🎉', fmt(tFinish) + ' ث', 'جاري إرسال نتيجتك...');
     send();
   }
@@ -224,30 +230,45 @@
     if (m) { e.preventDefault(); step(m); }
   });
 
-  // ===== الحلقة: عدّاد البداية، الوقت، النهاية =====
-  var closing = false;
+  // ===== الحلقة: الرسم عند التغيير فقط، والنصوص كل 100ms =====
+  var closing = false, lastDraw = 0, lastDom = 0;
+  function endScreen(txt, sub) {
+    phase = 'over'; dirty = true; cover(true, 'bad', txt, '', sub);
+    try { if (tg) tg.disableClosingConfirmation(); } catch (e) {}
+    if (!closing) { closing = true; setTimeout(function () { try { tg && tg.close(); } catch (e) {} }, 2500); }
+  }
+  // السباق انتهى عند الكل (اكتمل عدد الفائزين): نوقف اللعب فوراً
+  function raceOver() {
+    if (phase === 'done' || phase === 'over') return;
+    endScreen('انتهى السباق! 🏁', 'اكتمل عدد الفائزين، شوف النتيجة بالمجموعة');
+  }
   function tick() {
-    var t = now();
-    if (phase === 'wait') {
-      if (!beginAt || t >= beginAt) { phase = 'run'; cover(false); }
-      else cover(true, '', 'استعد! تبدأ السباق بعد', Math.ceil((beginAt - t) / 1000), LEVELS[lvl].hint);
+    var t = now(), ts = Date.now(), slow = ts - lastDom > 100;
+    if (phase === 'wait' && (!beginAt || t >= beginAt)) { phase = 'run'; cover(false); slow = true; }
+    if (phase === 'run' && endAt && t >= endAt) endScreen('انتهى الوقت', 'ما وصل أحد للمخرج بوقتك');
+    if (slow) {
+      lastDom = ts;
+      if (phase === 'wait') cover(true, '', 'استعد! تبدأ السباق بعد', Math.ceil((beginAt - t) / 1000), LEVELS[lvl].hint);
+      if (phase === 'run') $('time').textContent = fmt(t - beginAt);
+      if (endAt) {
+        var left = Math.max(0, Math.ceil((endAt - t) / 1000));
+        $('left').textContent = left; $('leftChip').classList.toggle('low', left <= 15);
+      } else $('left').textContent = '--';
     }
-    if (phase === 'run') {
-      $('time').textContent = fmt(t - beginAt);
-      if (endAt && t >= endAt) {
-        phase = 'over'; cover(true, 'bad', 'انتهى الوقت', '', 'ما وصل أحد للمخرج بوقتك');
-        try { if (tg) tg.disableClosingConfirmation(); } catch (e) {}
-        if (!closing) { closing = true; setTimeout(function () { try { tg && tg.close(); } catch (e) {} }, 2500); }
-      }
-    }
-    if (phase === 'done' && !sent) $('time').textContent = fmt(tFinish);
-    var lc = $('leftChip');
-    if (endAt) {
-      var left = Math.max(0, Math.ceil((endAt - t) / 1000));
-      $('left').textContent = left; lc.classList.toggle('low', left <= 15);
-    } else $('left').textContent = '--';
-    draw();
+    if (dirty || ts - lastDraw > 90) { draw(); lastDraw = ts; dirty = false; }
     requestAnimationFrame(tick);
+  }
+
+  // قناة إشعار انتهاء السباق (يرسلها البوت): تخلي صفحة كل اللاعبين تتوقف لما يكتمل الفائزين
+  function listenRelay() {
+    var topic = q.get('r');
+    if (!topic || !window.EventSource) return;
+    try {
+      var es = new EventSource('https://ntfy.sh/' + encodeURIComponent(topic) + '/sse?since=all');
+      es.onmessage = function (ev) {
+        try { var m = JSON.parse(ev.data); if (m && m.event === 'message') { raceOver(); es.close(); } } catch (x) {}
+      };
+    } catch (e) {}
   }
 
   function start() {
@@ -255,6 +276,7 @@
     $('title').textContent = ['المتاهة: سهل', 'المتاهة: عادي', 'المتاهة: صعب'][lvl] + (demo ? ' (تجربة)' : '');
     $('hint').textContent = 'اسحب إصبعك على المتاهة، وأول من يوصل للنقطة الخضراء يفوز';
     if (demo) { beginAt = Date.now(); }
+    listenRelay();
     tick();
   }
   // نصحح فرق ساعة الجوال عن ساعة السيرفر من ترويسة Date للاستضافة، وإذا فشل نكمل بدونه
