@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>RAY - المتاهة</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root { --bg:#050b1f; --bg2:#0b1f5c; --panel:#0a1840; --line:#1e6bff; --cyan:#29b6ff; --muted:#8fa6d9; --good:#3ddc84; --warn:#ff4d5a; }
+  html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; overscroll-behavior:none; position:fixed; inset:0;
+    touch-action:none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent;
+    background:var(--bg); color:#fff; font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif; }
+  body { background: radial-gradient(120% 60% at 50% 0%, var(--bg2) 0%, transparent 60%), var(--bg); }
+  #app { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; gap:10px; box-sizing:border-box;
+    padding: calc(env(safe-area-inset-top) + 8px) 12px calc(env(safe-area-inset-bottom) + 10px); }
+  .wrap { width:100%; max-width:460px; display:flex; flex-direction:column; gap:10px; }
+  header { display:flex; align-items:flex-end; justify-content:space-between; gap:10px; }
+  .brand { font-weight:900; font-size:22px; letter-spacing:1px; position:relative; padding-bottom:5px; text-shadow:0 0 10px rgba(41,182,255,.7); }
+  .brand::after { content:""; position:absolute; left:12%; right:12%; bottom:0; height:3px; border-radius:3px; background:var(--cyan); box-shadow:0 0 8px var(--cyan); }
+  h1 { margin:0; flex:1; text-align:center; font-size:16px; font-weight:800; padding-bottom:5px; }
+  .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .chip { background:var(--panel); border:1.5px solid var(--line); border-radius:12px; padding:4px 8px; text-align:center; box-shadow:0 0 10px rgba(30,107,255,.35); }
+  .chip small { display:block; font-size:11px; color:var(--muted); font-weight:600; }
+  .chip b { font-size:19px; font-weight:800; font-variant-numeric:tabular-nums; }
+  .chip.live b { color:var(--cyan); }
+  .chip.low b { color:var(--warn); }
+  #stage { position:relative; flex:none; align-self:center; border:2.5px solid var(--line); border-radius:16px; overflow:hidden; background:#040916;
+    box-shadow:0 0 0 1px #0b2c8a, 0 0 18px rgba(30,107,255,.7), 0 0 40px rgba(30,107,255,.3); }
+  canvas { display:block; touch-action:none; }
+  #hint { text-align:center; font-size:13px; color:var(--muted); font-weight:600; margin:0; }
+  #cover { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; text-align:center;
+    background:#040916; padding:16px; }
+  #cover[hidden] { display:none; }
+  #cover .big { direction:ltr; font-size:72px; font-weight:900; font-variant-numeric:tabular-nums; color:var(--cyan); text-shadow:0 0 18px rgba(41,182,255,.7); line-height:1; }
+  #cover .t { font-size:22px; font-weight:900; }
+  #cover .s { font-size:14px; color:var(--muted); font-weight:600; }
+  #cover.ok .t { color:var(--good); }
+  #cover.bad .t { color:var(--warn); }
+</style>
+</head>
+<body>
+<div id="app"><div class="wrap">
+  <header><div class="brand">RAY</div><h1 id="title">المتاهة</h1></header>
+  <div class="stats">
+    <div class="chip live"><small>الوقت</small><b id="time">0.0</b></div>
+    <div class="chip"><small>الخطوات</small><b id="moves">0</b></div>
+    <div class="chip" id="leftChip"><small>المتبقي</small><b id="left">--</b></div>
+  </div>
+  <div id="stage"><canvas id="cv"></canvas>
+    <div id="cover"><div class="t" id="cT">جاري التحضير</div><div class="big" id="cBig"></div><div class="s" id="cS"></div></div>
+  </div>
+  <p id="hint"></p>
+</div></div>
+
+<script>
+(function () {
+  var tg = window.Telegram && window.Telegram.WebApp;
+  if (tg) {
+    try { tg.ready(); } catch (e) {}
+    try { tg.expand(); } catch (e) {}
+    try { tg.disableVerticalSwipes(); } catch (e) {}
+    try { tg.enableClosingConfirmation(); } catch (e) {}
+    try { tg.setHeaderColor('#050b1f'); tg.setBackgroundColor('#050b1f'); } catch (e) {}
+  }
+  ['touchmove', 'gesturestart', 'gesturechange', 'wheel', 'contextmenu'].forEach(function (ev) {
+    document.addEventListener(ev, function (e) { e.preventDefault(); }, { passive: false });
+  });
+
+  // ===== نفس ثوابت البوت (لازم تتطابق مع maze_race بالبوت) =====
+  var LEVELS = [
+    { c: 11, r: 15, fog: 0,   hint: 'المخرج ظاهر، لكن الطرق فيها تفرعات مسدودة' },
+    { c: 15, r: 21, fog: 6,   hint: 'ضباب خفيف: دوّر على المخرج' },
+    { c: 19, r: 25, fog: 3.4, hint: 'ضباب كثيف: ما تشوف إلا اللي حولك' }
+  ];
+  var N = 1, E = 2, S = 4, W = 8;
+  var DX = { 1: 0, 2: 1, 4: 0, 8: -1 }, DY = { 1: -1, 2: 0, 4: 1, 8: 0 }, OPP = { 1: 4, 2: 8, 4: 1, 8: 2 };
+  var DIRS = [N, E, S, W]; // الترميز بالإرسال: 0=N 1=E 2=S 3=W
+
+  var q = new URLSearchParams(location.search);
+  var demo = !q.get('s');
+  var seed = parseInt(q.get('s'), 10) || (1000 + ((Math.random() * 9000) | 0));
+  var lvl = Math.max(0, Math.min(2, parseInt(q.get('l'), 10) || (demo ? 1 : 0)));
+  var beginAt = (parseInt(q.get('b'), 10) || 0) * 1000;
+  var endAt = (parseInt(q.get('e'), 10) || 0) * 1000;
+  var skew = 0;
+
+  function rng(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+  var cols, rows, cells, exitX, exitY, shortest;
+  function gen() {
+    cols = LEVELS[lvl].c; rows = LEVELS[lvl].r;
+    var rnd = rng(seed * 7 + lvl * 1013), i, j;
+    cells = []; for (i = 0; i < cols * rows; i++) cells.push(N | E | S | W);
+    var parent = []; for (i = 0; i < cols * rows; i++) parent.push(i);
+    function find(a) { while (parent[a] !== a) { parent[a] = parent[parent[a]]; a = parent[a]; } return a; }
+    var edges = [];
+    for (j = 0; j < rows; j++) for (i = 0; i < cols; i++) {
+      if (i < cols - 1) edges.push([j * cols + i, E]);
+      if (j < rows - 1) edges.push([j * cols + i, S]);
+    }
+    for (i = edges.length - 1; i > 0; i--) { j = (rnd() * (i + 1)) | 0; var tmp = edges[i]; edges[i] = edges[j]; edges[j] = tmp; }
+    edges.forEach(function (ed) {
+      var a = ed[0], d = ed[1], b = a + (d === E ? 1 : cols), ra = find(a), rb = find(b);
+      if (ra !== rb) { parent[ra] = rb; cells[a] &= ~d; cells[b] &= ~OPP[d]; }
+    });
+    var dist = {}, qq = [0], far = 0; dist[0] = 0;
+    for (i = 0; i < qq.length; i++) {
+      var c = qq[i], x = c % cols, y = (c / cols) | 0;
+      if (dist[c] > dist[far]) far = c;
+      DIRS.forEach(function (dd) {
+        if (cells[c] & dd) return;
+        var n = (y + DY[dd]) * cols + (x + DX[dd]);
+        if (dist[n] === undefined) { dist[n] = dist[c] + 1; qq.push(n); }
+      });
+    }
+    exitX = far % cols; exitY = (far / cols) | 0; shortest = dist[far];
+  }
+
+  var cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+  var dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 3));
+  var cell, px = 0, py = 0, path = [[0, 0]], moves = 0, phase = 'wait', sent = false, tFinish = 0;
+
+  function size() {
+    var maxW = Math.min(window.innerWidth - 36, 440);
+    var maxH = Math.max(180, window.innerHeight - 230);
+    cell = Math.max(10, Math.floor(Math.min(maxW / cols, maxH / rows)));
+    cv.style.width = cell * cols + 'px'; cv.style.height = cell * rows + 'px';
+    cv.width = cell * cols * dpr; cv.height = cell * rows * dpr;
+  }
+
+  function draw() {
+    var K = cell * dpr, w = cv.width, h = cv.height;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = '#040916'; ctx.fillRect(0, 0, w, h);
+    var ex = exitX * K, ey = exitY * K, pulse = 0.5 + 0.5 * Math.sin(Date.now() / 260);
+    ctx.fillStyle = 'rgba(61,220,132,' + (0.18 + 0.2 * pulse) + ')'; ctx.fillRect(ex, ey, K, K);
+    ctx.fillStyle = '#3ddc84'; ctx.beginPath(); ctx.arc(ex + K / 2, ey + K / 2, K * 0.22, 0, 7); ctx.fill();
+    ctx.strokeStyle = 'rgba(41,182,255,.45)'; ctx.lineWidth = K * 0.22; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath(); path.forEach(function (p, i) { var x = (p[0] + .5) * K, y = (p[1] + .5) * K; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke();
+    ctx.strokeStyle = '#1e6bff'; ctx.lineWidth = Math.max(2, K * 0.1); ctx.shadowColor = '#29b6ff'; ctx.shadowBlur = K * 0.25;
+    ctx.beginPath();
+    for (var y = 0; y < rows; y++) for (var x = 0; x < cols; x++) {
+      var c = cells[y * cols + x], X = x * K, Y = y * K;
+      if (c & N) { ctx.moveTo(X, Y); ctx.lineTo(X + K, Y); }
+      if (c & W) { ctx.moveTo(X, Y); ctx.lineTo(X, Y + K); }
+      if (y === rows - 1 && (c & S)) { ctx.moveTo(X, Y + K); ctx.lineTo(X + K, Y + K); }
+      if (x === cols - 1 && (c & E)) { ctx.moveTo(X + K, Y); ctx.lineTo(X + K, Y + K); }
+    }
+    ctx.stroke(); ctx.shadowBlur = 0;
+    var bx = (px + .5) * K, by = (py + .5) * K;
+    ctx.shadowColor = '#ffffff'; ctx.shadowBlur = K * 0.5; ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(bx, by, K * 0.27, 0, 7); ctx.fill(); ctx.shadowBlur = 0;
+    var fog = LEVELS[lvl].fog;
+    if (fog && phase !== 'done') {
+      var R = fog * K, g = ctx.createRadialGradient(bx, by, R * 0.45, bx, by, R);
+      g.addColorStop(0, 'rgba(4,9,22,0)'); g.addColorStop(0.85, 'rgba(4,9,22,0.97)'); g.addColorStop(1, 'rgba(4,9,22,1)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(bx, by, K * 0.27, 0, 7); ctx.fill();
+    }
+  }
+
+  function now() { return Date.now() + skew; }
+  function fmt(ms) { return (Math.max(0, ms) / 1000).toFixed(1); }
+  var $ = function (id) { return document.getElementById(id); };
+  function cover(show, cls, t, big, s) {
+    var c = $('cover'); c.hidden = !show; c.className = cls || '';
+    $('cT').textContent = t || ''; $('cBig').textContent = big || ''; $('cS').textContent = s || '';
+  }
+
+  function encode() {
+    var mv = [];
+    for (var i = 1; i < path.length; i++) {
+      var dx = path[i][0] - path[i - 1][0], dy = path[i][1] - path[i - 1][1];
+      mv.push(dx === 1 ? 1 : dx === -1 ? 3 : dy === 1 ? 2 : 0);
+    }
+    var bytes = [(mv.length >> 8) & 255, mv.length & 255];
+    for (var k = 0; k < mv.length; k += 4) bytes.push((mv[k] || 0) | ((mv[k + 1] || 0) << 2) | ((mv[k + 2] || 0) << 4) | ((mv[k + 3] || 0) << 6));
+    var bin = ''; bytes.forEach(function (b) { bin += String.fromCharCode(b); });
+    return 'mz1.' + seed + '.' + lvl + '.' + btoa(bin);
+  }
+
+  function step(d) {
+    if (phase !== 'run') return false;
+    if (cells[py * cols + px] & d) return false;
+    px += DX[d]; py += DY[d];
+    var L = path.length;
+    if (L > 1 && path[L - 2][0] === px && path[L - 2][1] === py) path.pop(); else path.push([px, py]);
+    moves++; $('moves').textContent = moves;
+    if (navigator.vibrate) { try { navigator.vibrate(8); } catch (e) {} }
+    if (px === exitX && py === exitY) win();
+    return true;
+  }
+
+  function win() {
+    phase = 'done'; tFinish = now() - beginAt;
+    cover(true, 'ok', 'وصلت! 🎉', fmt(tFinish) + ' ث', 'جاري إرسال نتيجتك...');
+    send();
+  }
+  function send() {
+    if (sent) return; sent = true;
+    try { if (tg) tg.disableClosingConfirmation(); } catch (e) {}
+    var data = encode();
+    if (tg && tg.sendData) tg.sendData(data);
+    else $('cS').textContent = 'تجربة فقط: افتح الصفحة من تيليجرام لإرسال النتيجة';
+  }
+
+  // ===== السحب والأسهم =====
+  var anchor = null;
+  cv.addEventListener('pointerdown', function (e) { anchor = { x: e.clientX, y: e.clientY }; try { cv.setPointerCapture(e.pointerId); } catch (x) {} });
+  cv.addEventListener('pointermove', function (e) {
+    if (!anchor) return;
+    var th = cell * 0.55, guard = 0;
+    while (guard++ < 6) {
+      var dx = e.clientX - anchor.x, dy = e.clientY - anchor.y;
+      if (Math.max(Math.abs(dx), Math.abs(dy)) < th) break;
+      var d = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? E : W) : (dy > 0 ? S : N);
+      if (step(d)) { anchor.x += DX[d] * cell; anchor.y += DY[d] * cell; }
+      else { anchor.x = e.clientX; anchor.y = e.clientY; break; }
+    }
+  });
+  ['pointerup', 'pointercancel'].forEach(function (n) { cv.addEventListener(n, function () { anchor = null; }); });
+  document.addEventListener('keydown', function (e) {
+    var m = { ArrowUp: N, ArrowRight: E, ArrowDown: S, ArrowLeft: W }[e.key];
+    if (m) { e.preventDefault(); step(m); }
+  });
+
+  // ===== الحلقة: عدّاد البداية، الوقت، النهاية =====
+  var closing = false;
+  function tick() {
+    var t = now();
+    if (phase === 'wait') {
+      if (!beginAt || t >= beginAt) { phase = 'run'; cover(false); }
+      else cover(true, '', 'استعد! تبدأ السباق بعد', Math.ceil((beginAt - t) / 1000), LEVELS[lvl].hint);
+    }
+    if (phase === 'run') {
+      $('time').textContent = fmt(t - beginAt);
+      if (endAt && t >= endAt) {
+        phase = 'over'; cover(true, 'bad', 'انتهى الوقت', '', 'ما وصل أحد للمخرج بوقتك');
+        try { if (tg) tg.disableClosingConfirmation(); } catch (e) {}
+        if (!closing) { closing = true; setTimeout(function () { try { tg && tg.close(); } catch (e) {} }, 2500); }
+      }
+    }
+    if (phase === 'done' && !sent) $('time').textContent = fmt(tFinish);
+    var lc = $('leftChip');
+    if (endAt) {
+      var left = Math.max(0, Math.ceil((endAt - t) / 1000));
+      $('left').textContent = left; lc.classList.toggle('low', left <= 15);
+    } else $('left').textContent = '--';
+    draw();
+    requestAnimationFrame(tick);
+  }
+
+  function start() {
+    gen(); size();
+    $('title').textContent = ['المتاهة: سهل', 'المتاهة: عادي', 'المتاهة: صعب'][lvl] + (demo ? ' (تجربة)' : '');
+    $('hint').textContent = 'اسحب إصبعك على المتاهة، وأول من يوصل للنقطة الخضراء يفوز';
+    if (demo) { beginAt = Date.now(); }
+    tick();
+  }
+  // نصحح فرق ساعة الجوال عن ساعة السيرفر من ترويسة Date للاستضافة، وإذا فشل نكمل بدونه
+  if (!demo && beginAt) {
+    var done = false, t0 = Date.now();
+    var go = function () { if (!done) { done = true; start(); } };
+    setTimeout(go, 1200);
+    try {
+      fetch(location.pathname + '?_=' + t0, { method: 'HEAD', cache: 'no-store' }).then(function (r) {
+        var d = r.headers.get('Date');
+        if (d && !done) { var t1 = Date.now(); skew = new Date(d).getTime() - (t0 + t1) / 2; }
+        go();
+      }).catch(go);
+    } catch (e) { go(); }
+  } else start();
+  window.addEventListener('resize', function () { if (cells) size(); });
+})();
+</script>
+</body>
+</html>
