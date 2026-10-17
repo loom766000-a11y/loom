@@ -147,5 +147,5 @@ document.getElementById('cs').onclick=function(){var on=sp.style.display!='grid'
 sp.onclick=function(e){var b=e.target.closest('[data-s]');if(!b)return;sendC({a:'s',s:+b.dataset.s});sp.style.display='none';document.getElementById('cl').style.display='block'};
 document.getElementById('cg').onclick=doText;document.getElementById('cv').onclick=closeChat;document.getElementById('ct').onfocus=function(){openChat();document.getElementById('sp').style.display='none';document.getElementById('cl').style.display='block'};document.getElementById('cw').onclick=function(){document.getElementById('ct').focus()};
 document.getElementById('ct').onkeydown=function(e){if(e.key==='Enter'){e.preventDefault();doText()}}})();
-if(!T||!U||!K){document.getElementById('info').textContent='رابط غير صالح، افتح اللعبة من رسالة البوت'}else conn();
+if(!T||!U||!K){document.getElementById('info').textContent='رابط غير صالح، افتح اللعبة من رسالة البوت'}else{conn();setTimeout(function(){if(!S)document.getElementById('info').textContent='⚠️ ما وصلت حالة اللعبة من السيرفر. اكتب «العب» بالخاص للبوت وافتحها من جديد'},10000)}
 </script></body></html>
