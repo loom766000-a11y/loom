@@ -22,8 +22,9 @@ body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% 0,#2a107
 .c{height:34px;border:1px solid #2f1a80;border-radius:7px;background:#05020f;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff}
 .c.pot{color:#5b4a99}.c.can{border-color:#5b3fd6}.c.sel{background:#3b1fa8;color:#fff;border-color:var(--hi)}
 .lb{width:34px;height:34px;border-radius:8px;background:#e8e4f5;color:#111;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center}
-.die{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);background:linear-gradient(145deg,#fff,#cfc9e6);border-radius:22%;aspect-ratio:1;box-shadow:0 4px 10px #0008}
-.die i{border-radius:50%;margin:16%}.die i.p{background:var(--pc,#222)}
+.die{position:relative;aspect-ratio:1;border-radius:24%;background:linear-gradient(160deg,#fff 0%,#f3f0fd 40%,#d6d0ec 100%);box-shadow:inset 0 3px 4px #fff,inset 0 -5px 8px rgba(110,90,185,.4),0 7px 14px rgba(0,0,0,.55),0 10px 18px -8px rgba(139,92,255,.6)}
+.die .pg{position:absolute;inset:14%;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr)}
+.die i{border-radius:50%;margin:6%}.die i.p{background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.65) 0,rgba(255,255,255,0) 42%),var(--pc,#222);box-shadow:inset 0 -2px 3px rgba(0,0,0,.35),0 1px 2px rgba(0,0,0,.25)}
 .mini{width:34px}.sm{font-size:12px}
 .bon,.tot{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;font-size:13px;margin:3px 0;border-radius:9px}
 .bon{border:1px solid #2a1673;height:44px}.tot{background:#1a0e40;font-weight:700}
@@ -53,7 +54,7 @@ if(c<6)return n[c+1]*(c+1);if(c==6)return m>=3?s:0;if(c==7)return m>=4?s:0;
 if(c==8){var a=n.filter(function(x){return x}).sort().join('');return a=='23'?25:0}
 if(c==9)return st.indexOf('1111')>=0?30:0;if(c==10)return st.indexOf('11111')>=0?40:0;if(c==11)return m==5?50:0;return s}
 function tot(sc){var v=sc.map(function(x){return Math.max(0,x)}),u=0,l=0,i;for(i=0;i<6;i++)u+=v[i];for(i=6;i<13;i++)l+=v[i];return{u:u,b:u>=63?35:0,l:l,t:u+(u>=63?35:0)+l}}
-function die(n,cls,idx){var h='<div class="die '+(cls||'')+'"'+(idx==null?'':' data-i="'+idx+'"')+' style="--pc:'+(COL[n-1]||'#222')+'">',i;for(i=0;i<9;i++)h+='<i'+(n&&PIP[n].indexOf(i)>=0?' class="p"':'')+'></i>';return h+'</div>'}
+function die(n,cls,idx){var h='<div class="die '+(cls||'')+'"'+(idx==null?'':' data-i="'+idx+'"')+' style="--pc:'+(COL[n-1]||'#222')+'"><div class="pg">',i;for(i=0;i<9;i++)h+='<i'+(n&&PIP[n].indexOf(i)>=0?' class="p"':'')+'></i>';return h+'</div></div>'}
 function me(){return S?S.p.indexOf(U):-1}
 function mine(){return S&&!S.o&&S.p[S.t]==U}
 function conn(){var es=new EventSource('https://ntfy.sh/'+T+'/sse?since=all');
