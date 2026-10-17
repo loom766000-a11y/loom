@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>دايس</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#0a0618;--card:#120a2a;--line:#3b1fa8;--tx:#d9ccff;--dim:#7d6bc2;--hi:#8b5cff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% 0,#2a1070,var(--bg) 62%);color:var(--tx);font-family:system-ui,-apple-system,sans-serif;padding:env(safe-area-inset-top) 10px calc(env(safe-area-inset-bottom) + 10px)}
+#head{display:flex;justify-content:center;align-items:center;gap:10px;padding:14px 0 8px}
+.pl{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:13px;opacity:.6}
+.pl.on{opacity:1}.pl.on .av{box-shadow:0 0 16px var(--hi);border-color:var(--hi)}
+.av{width:58px;height:58px;border-radius:50%;border:2px solid var(--line);background:#1a0e40;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#fff}
+.sc{font-size:26px;font-weight:800;min-width:34px;text-align:center}.vs{font-weight:800;color:var(--hi);font-size:20px}
+#info{text-align:center;font-size:14px;color:var(--dim);margin:2px 0 8px;min-height:20px}
+#tbl{direction:ltr;display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:14px;background:rgba(18,10,42,.8);overflow:hidden}
+.half{padding:4px}.half+.half{border-left:1px solid var(--line)}
+.h,.r{display:grid;grid-template-columns:38px 1fr 1fr;gap:4px;align-items:center;margin:3px 0}
+.h{font-size:12px;color:var(--dim);text-align:center}
+.r{border:1px solid #2a1673;border-radius:9px;padding:3px;height:44px}
+.v{text-align:center;font-weight:700;color:#9a86ff}
+.c{height:34px;border:1px solid #2f1a80;border-radius:7px;background:#05020f;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff}
+.c.pot{color:#5b4a99}.c.can{border-color:#5b3fd6}.c.sel{background:#3b1fa8;color:#fff;border-color:var(--hi)}
+.lb{width:34px;height:34px;border-radius:8px;background:#e8e4f5;color:#111;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center}
+.die{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:18%;background:linear-gradient(145deg,#fff,#cfc9e6);border-radius:22%;aspect-ratio:1;box-shadow:0 4px 10px #0008}
+.die i{border-radius:50%;margin:12%}.die i.p{background:var(--pc,#222)}
+.mini{width:34px}.sm{font-size:12px}
+.bon,.tot{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;font-size:13px;margin:3px 0;border-radius:9px}
+.bon{border:1px solid #2a1673;height:44px}.tot{background:#1a0e40;font-weight:700}
+.g{color:#6ddc3c}.y{color:#ffd23c}
+#dice{display:flex;justify-content:center;gap:8px;margin:16px 0 12px;direction:ltr}
+#dice .die{width:17vw;max-width:68px;transition:transform .15s}
+#dice .die.hold{transform:translateY(-10px);outline:3px solid var(--hi)}
+#dice .die.rl{animation:sh .12s infinite}@keyframes sh{50%{transform:rotate(14deg) scale(.92)}}
+#btns{display:flex;gap:10px}
+button{flex:1;height:50px;border-radius:12px;border:1px solid var(--hi);background:linear-gradient(#5230e0,#2b14a0);color:#fff;font-size:18px;font-weight:700;font-family:inherit}
+button:disabled{opacity:.35;background:#2a2150;border-color:#4a3d80}
+#tm{text-align:center;margin-top:12px;font-size:16px;color:var(--dim)}
+#ov{position:fixed;inset:0;background:#000c;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;font-size:26px;font-weight:800;text-align:center;padding:20px}
+#ov small{font-size:15px;color:var(--dim);font-weight:400}
+</style></head><body>
+<div id="head"></div><div id="info">جاري الاتصال…</div><div id="tbl"></div>
+<div id="dice"></div>
+<div id="btns"><button id="bp" disabled>اللعب</button><button id="br" disabled>رمي</button></div>
+<div id="tm"></div><div id="ov"></div>
+<script>
+var q=new URLSearchParams(location.search),T=q.get('t'),U=q.get('u'),K=q.get('k'),tg=window.Telegram&&Telegram.WebApp;
+if(tg){try{tg.ready();tg.expand()}catch(e){}}
+var S=null,rcv=0,sel=-1,held=[0,0,0,0,0],live=false,anim=0,CL=['3X','4X','FH','SM','LG','5X','CH'],PIP={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]},COL=['#e53935','#fb8c00','#1e6fff','#4caf50','#9c27b0','#00bcd4'];
+setTimeout(function(){live=true},900);
+function score(d,c){var n=[0,0,0,0,0,0,0],s=0,i;for(i=0;i<5;i++){n[d[i]]++;s+=d[i]}var m=Math.max.apply(0,n),st=n.slice(1).map(function(x){return x?1:0}).join('');
+if(c<6)return n[c+1]*(c+1);if(c==6)return m>=3?s:0;if(c==7)return m>=4?s:0;
+if(c==8){var a=n.filter(function(x){return x}).sort().join('');return a=='23'?25:0}
+if(c==9)return st.indexOf('1111')>=0?30:0;if(c==10)return st.indexOf('11111')>=0?40:0;if(c==11)return m==5?50:0;return s}
+function tot(sc){var v=sc.map(function(x){return Math.max(0,x)}),u=0,l=0,i;for(i=0;i<6;i++)u+=v[i];for(i=6;i<13;i++)l+=v[i];return{u:u,b:u>=63?35:0,l:l,t:u+(u>=63?35:0)+l}}
+function die(n,cls,idx){var h='<div class="die '+(cls||'')+'"'+(idx==null?'':' data-i="'+idx+'"')+' style="--pc:'+(COL[n-1]||'#222')+'">',i;for(i=0;i<9;i++)h+='<i'+(n&&PIP[n].indexOf(i)>=0?' class="p"':'')+'></i>';return h+'</div>'}
+function me(){return S?S.p.indexOf(U):-1}
+function mine(){return S&&!S.o&&S.p[S.t]==U}
+function conn(){var es=new EventSource('https://ntfy.sh/'+T+'/sse?since=all');
+es.onmessage=function(e){try{var m=JSON.parse(e.data);if(m.event!=='message')return;var s=JSON.parse(m.message);if(!S||s.n>S.n)apply(s)}catch(x){}}}
+function apply(s){var p=S;S=s;rcv=Date.now();if(!p||p.t!=s.t||s.rl==3){sel=-1;held=[0,0,0,0,0]}
+if(!mine())held=s.h.map(Number);
+if(live&&p&&s.rl<3&&(p.rl!=s.rl||p.t!=s.t)){anim=Date.now()+650;var iv=setInterval(function(){rdice();if(Date.now()>anim){clearInterval(iv);rdice()}},90)}
+render()}
+function send(o){o.u=U;o.k=K;fetch('https://ntfy.sh/'+T+'u',{method:'POST',body:JSON.stringify(o)}).catch(function(){})}
+function render(){if(!S)return;var m=me(),o=1-m,i;
+var h='',ord=[o,m];for(i=0;i<2;i++){var k=ord[i],on=!S.o&&S.t==k;h+=(i?'<div class="vs">VS</div>':'')+'<div class="sc">'+tot(S.s[k]).t+'</div><div class="pl'+(on?' on':'')+'"><div class="av">'+(S.nm[k]||'?').charAt(0)+'</div>'+(k==m?'أنت':S.nm[k])+'</div>'}
+document.getElementById('head').innerHTML=h.replace('<div class="vs">VS</div><div class="sc">'+tot(S.s[m]).t+'</div>','<div class="vs">VS</div><div class="sc">'+tot(S.s[m]).t+'</div>');
+var T1=tot(S.s[m]),T2=tot(S.s[o]),rolled=S.d[0]>0,my=mine()&&S.rl<3&&rolled;
+function cell(c){var v=S.s[m][c],t=S.s[o][c],y;
+if(v>=0)y='<div class="c">'+v+'</div>';else if(my)y='<div class="c can pot'+(sel==c?' sel':'')+'" data-c="'+c+'">'+score(S.d,c)+'</div>';else y='<div class="c"></div>';
+return'<div class="v">'+(t>=0?t:'')+'</div>'+y}
+var L='<div class="half"><div class="h"><span></span><span>هم</span><span>أنت</span></div>',R='<div class="half"><div class="h"><span></span><span>هم</span><span>أنت</span></div>';
+for(i=0;i<6;i++){L+='<div class="r">'+die(i+1,'mini')+cell(i)+'</div>'}
+L+='<div class="bon"><div>مكافأة<br><span class="sm" style="color:var(--dim)">إذا العلوي أكثر من 62</span></div><span class="g">'+T2.b+'</span><span class="g">'+T1.b+'</span></div><div class="tot"><span>أعلى</span><span class="y">'+T2.u+'</span><span class="g">'+T1.u+'</span></div></div>';
+for(i=0;i<7;i++)R+='<div class="r"><div class="lb">'+CL[i]+'</div>'+cell(6+i)+'</div>';
+R+='<div class="bon" style="visibility:hidden"></div><div class="tot"><span>أدنى</span><span class="y">'+T2.l+'</span><span class="g">'+T1.l+'</span></div></div>';
+document.getElementById('tbl').innerHTML=L+R;rdice();
+var bp=document.getElementById('bp'),br=document.getElementById('br');
+br.textContent='رمي ('+S.rl+')';br.disabled=!(mine()&&S.rl>0);bp.disabled=!(my&&sel>=0);
+var left=13-S.s[m].filter(function(x){return x>=0}).length;document.getElementById('tm').dataset.l=left;
+var ov=document.getElementById('ov');if(S.o){var a=T1.t,b=T2.t;ov.style.display='flex';ov.innerHTML=(S.w<0?'🤝 تعادل':S.w==m?'🎉 فزت!':'😔 فاز الخصم')+'<small>'+a+' — '+b+(S.f=='ended'?'<br>انسحب أحد اللاعبين':S.f=='forfeit'?'<br>انتهى وقت أحد اللاعبين':S.f=='cancel'?'<br>أُنهيت اللعبة':'')+'</small>'}
+tick()}
+function rdice(){if(!S)return;var h='',i,an=Date.now()<anim;for(i=0;i<5;i++){var n=S.d[i],isH=held[i],r=an&&!isH;if(r)n=1+Math.floor(Math.random()*6);h+=die(n,(isH&&mine()?'hold ':'')+(isH&&!mine()?'hold ':'')+(r?'rl':''),i)}document.getElementById('dice').innerHTML=h}
+function tick(){if(!S)return;var el=document.getElementById('tm'),r=Math.max(0,Math.ceil((rcv+S.rem*1000-Date.now())/1000));
+document.getElementById('info').textContent=S.o?'':(mine()?'🎲 دورك':'⏳ دور '+S.nm[S.t]);
+if(!S.o)el.textContent=r+' ث   ·   تبقى '+el.dataset.l+' دور'}
+setInterval(tick,300);
+document.addEventListener('click',function(e){var t=e.target.closest('[data-c]');if(t&&mine()&&S.rl<3){sel=+t.dataset.c;render();return}
+var d=e.target.closest('#dice .die');if(d&&mine()&&S.rl<3&&S.rl>0&&S.d[0]>0){var i=+d.dataset.i;held[i]=held[i]?0:1;rdice()}});
+document.getElementById('br').onclick=function(){if(!mine()||S.rl<1)return;this.disabled=true;send({a:'r',h:held})};
+document.getElementById('bp').onclick=function(){if(!mine()||sel<0)return;this.disabled=true;send({a:'p',c:sel});sel=-1};
+if(!T||!U||!K){document.getElementById('info').textContent='رابط غير صالح، افتح اللعبة من رسالة البوت'}else conn();
+</script></body></html>
